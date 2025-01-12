@@ -54,3 +54,5 @@ def obtener_info_sistema():
         "Disco Usado (%)": round(disco_info.percent, 2),
         "Tiempo de Uso del Sistema": str(timedelta(seconds=psutil.boot_time())),
     }
+
+# Este es prueba de Conexion Erick Pulamarin
