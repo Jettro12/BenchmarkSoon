@@ -5,14 +5,29 @@ import platform
 from datetime import timedelta
 import clr  # Necesario para usar OpenHardwareMonitor
 import os
+#Necesarias para el api de Gemini
+import requests
+from dotenv import load_dotenv
+import google.generativeai as genai
 
 # Ruta al DLL de OpenHardwareMonitor
-dll_path = r"C:\Users\casa\Downloads\openhardwaremonitor-v0.9.6\OpenHardwareMonitor\OpenHardwareMonitorLib.dll"
+dll_path = r"C:\Users\ErickMau\Downloads\openhardwaremonitor-v0.9.6\OpenHardwareMonitor\OpenHardwareMonitorLib.dll"
 if not os.path.exists(dll_path):
     raise FileNotFoundError(f"No se encontró el archivo DLL en la ruta: {dll_path}")
 
 clr.AddReference(dll_path)
 from OpenHardwareMonitor import Hardware
+
+
+# Cargar las variables desde el archivo .env
+load_dotenv()
+
+# Obtener la API Key desde las variables de entorno
+api_key = os.getenv("API_KEY")
+
+# Configurar la API Key
+genai.configure(api_key=api_key)
+model = genai.GenerativeModel("gemini-2.0-flash-exp")
 
 # Función para obtener información del procesador
 def obtener_info_procesador():
@@ -27,7 +42,17 @@ def obtener_info_procesador():
     }
 
 # Función para obtener información de la RAM
+
 def obtener_info_ram():
+    ram_info = psutil.virtual_memory()
+    return {
+        "RAM Total (GB)": round(ram_info.total / (1024 ** 3), 2),
+        "RAM Usada (GB)": round(ram_info.used / (1024 ** 3), 2),
+        "RAM Libre (GB)": round(ram_info.available / (1024 ** 3), 2),
+        "Uso de RAM (%)": ram_info.percent,
+    }
+
+def obtener_infoqram():
     try:
         import wmi
         c = wmi.WMI()
@@ -46,6 +71,16 @@ def obtener_info_ram():
         return ram_info
     except Exception as e:
         return [{"Error": f"No se pudo obtener información de la RAM: {e}"}]
+
+def obtener_info_disco():
+    disco_info = psutil.disk_usage('/')
+    return {
+        "Disco Total (GB)": round(disco_info.total / (1024 ** 3), 2),
+        "Disco Usado (GB)": round(disco_info.used / (1024 ** 3), 2),
+        "Disco Libre (GB)": round(disco_info.free / (1024 ** 3), 2),
+        "Uso de Disco (%)": disco_info.percent,
+    }
+
 
 # Función para obtener las temperaturas del hardware
 def obtener_temperaturas_hardware():
@@ -80,62 +115,98 @@ def obtener_info_sistema():
         "Tiempo de Uso del Sistema": str(timedelta(seconds=psutil.boot_time())),
     }
 
-# Crear la interfaz en una sola ventana
-def mostrar_interfaz():
+# Función para obtener consejo de la IA utilizando Gemini
+def obtener_consejo_ia(prompt):
+    try:
+        # Llamada al modelo de Gemini con el prompt
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        return f"Error al generar el consejo: {e}"
+
+
+# Ventana principal (Inicio)
+def ventana_inicio():
+    def abrir_analisis():
+        ventana.destroy()
+        ventana_analisis()
+
     ventana = tk.Tk()
-    ventana.title("Monitor de Hardware")
-    ventana.geometry("800x600")
+    ventana.title("Inicio - Benchmark del Sistema")
+    ventana.geometry("400x300")
 
-    # Sección de Información del Sistema
-    frame_sistema = tk.LabelFrame(ventana, text="Información del Sistema", padx=10, pady=10)
-    frame_sistema.pack(fill="x", padx=10, pady=5)
-    info_sistema = obtener_info_sistema()
-    for clave, valor in info_sistema.items():
-        label = tk.Label(frame_sistema, text=f"{clave}: {valor}", anchor="w", padx=10)
-        label.pack(fill="x", pady=2)
+    label_titulo = tk.Label(ventana, text="Bienvenido al Benchmark del Sistema", font=("Arial", 14), pady=20)
+    label_titulo.pack()
 
-    # Sección de Información del Procesador
-    frame_procesador = tk.LabelFrame(ventana, text="Información del Procesador", padx=10, pady=10)
-    frame_procesador.pack(fill="x", padx=10, pady=5)
-    info_procesador = obtener_info_procesador()
-    for clave, valor in info_procesador.items():
-        label = tk.Label(frame_procesador, text=f"{clave}: {valor}", anchor="w", padx=10)
-        label.pack(fill="x", pady=2)
-
-    # Sección de Información de RAM
-    frame_ram = tk.LabelFrame(ventana, text="Información de RAM", padx=10, pady=10)
-    frame_ram.pack(fill="x", padx=10, pady=5)
-    ram_info = obtener_info_ram()
-    for ram in ram_info:
-        if "Error" in ram:
-            label_error = tk.Label(frame_ram, text=ram["Error"], fg="red")
-            label_error.pack()
-        else:
-            label = tk.Label(
-                frame_ram,
-                text=f"Tipo: {ram['Tipo']}, Velocidad: {ram['Velocidad (MHz)']} MHz, Capacidad: {ram['Capacidad (GB)']} GB",
-                anchor="w",
-                padx=10
-            )
-            label.pack(fill="x", pady=2)
-
-    # Sección de Temperaturas
-    frame_temperaturas = tk.LabelFrame(ventana, text="Temperaturas del Hardware", padx=10, pady=10)
-    frame_temperaturas.pack(fill="x", padx=10, pady=5)
-    temperaturas = obtener_temperaturas_hardware()
-    if "Error" in temperaturas:
-        label_error = tk.Label(frame_temperaturas, text=temperaturas["Error"], fg="red")
-        label_error.pack()
-    else:
-        for componente, temp in temperaturas.items():
-            if temp is not None:
-                label = tk.Label(frame_temperaturas, text=f"{componente}: {temp:.2f} °C", anchor="w", padx=10)
-            else:
-                label = tk.Label(frame_temperaturas, text=f"{componente}: No disponible", anchor="w", padx=10)
-            label.pack(fill="x", pady=2)
+    boton_analizar = tk.Button(ventana, text="Analizar", font=("Arial", 12), command=abrir_analisis)
+    boton_analizar.pack(pady=20)
 
     ventana.mainloop()
 
-# Ejecutar el programa
+# Ventana de análisis
+def ventana_analisis():
+    def mostrar_consejo():
+        ventana.destroy()
+        ventana_consejo()
+
+    def volver_inicio():
+        ventana.destroy()
+        ventana_inicio()
+
+    ventana = tk.Tk()
+    ventana.title("Análisis del Sistema")
+    ventana.geometry("600x400")
+
+    frame_info = tk.Frame(ventana)
+    frame_info.pack(pady=10)
+
+    label_titulo = tk.Label(frame_info, text="Resultados del Análisis", font=("Arial", 14))
+    label_titulo.pack()
+
+    info_procesador = obtener_info_procesador()
+    info_ram = obtener_info_ram()
+    info_disco = obtener_info_disco()
+
+    for categoria, datos in {
+        "Procesador": info_procesador,
+        "RAM": info_ram,
+        "Disco": info_disco,
+    }.items():
+        frame_categoria = tk.LabelFrame(ventana, text=categoria, padx=10, pady=10)
+        frame_categoria.pack(fill="x", padx=10, pady=5)
+        for clave, valor in datos.items():
+            label = tk.Label(frame_categoria, text=f"{clave}: {valor}")
+            label.pack(anchor="w")
+
+    boton_consejo = tk.Button(ventana, text="Dame un consejo", command=mostrar_consejo)
+    boton_consejo.pack(pady=10)
+
+    boton_volver = tk.Button(ventana, text="Volver al inicio", command=volver_inicio)
+    boton_volver.pack(pady=10)
+
+    ventana.mainloop()
+
+# Ventana de consejos
+def ventana_consejo():
+    def volver_inicio():
+        ventana.destroy()
+        ventana_inicio()
+
+    ventana = tk.Tk()
+    ventana.title("Consejo con IA")
+    ventana.geometry("400x300")
+
+    # Generar un consejo utilizando la API de Gemini
+    consejo_generado = obtener_consejo_ia("Dame un consejo para optimizar el rendimiento del sistema:")
+
+    label_consejo = tk.Label(ventana, text=consejo_generado, font=("Arial", 12), wraplength=380, pady=20)
+    label_consejo.pack()
+
+    boton_volver = tk.Button(ventana, text="Volver al inicio", command=volver_inicio)
+    boton_volver.pack(pady=20)
+
+    ventana.mainloop()
+
+# Ejecutar la aplicación
 if __name__ == "__main__":
-    mostrar_interfaz()
+    ventana_inicio()
