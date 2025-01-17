@@ -8,10 +8,11 @@ import os
 #Necesarias para el api de Gemini
 import requests
 from dotenv import load_dotenv
+from PIL import Image, ImageTk
 import google.generativeai as genai
 
 # Ruta al DLL de OpenHardwareMonitor
-dll_path = r"C:\Users\ErickMau\Downloads\openhardwaremonitor-v0.9.6\OpenHardwareMonitor\OpenHardwareMonitorLib.dll"
+dll_path = r"C:\Users\casa\Downloads\openhardwaremonitor-v0.9.6\OpenHardwareMonitor\OpenHardwareMonitorLib.dll"
 if not os.path.exists(dll_path):
     raise FileNotFoundError(f"No se encontró el archivo DLL en la ruta: {dll_path}")
 
@@ -25,7 +26,7 @@ load_dotenv()
 # Obtener la API Key desde las variables de entorno
 api_key = os.getenv("API_KEY")
 
-# Configurar la API Key
+# Configurar la API Key 
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel("gemini-2.0-flash-exp")
 
@@ -115,6 +116,58 @@ def obtener_info_sistema():
         "Tiempo de Uso del Sistema": str(timedelta(seconds=psutil.boot_time())),
     }
 
+# Función para generar el prompt
+def generar_prompt_personalizado():
+    info_procesador = obtener_info_procesador()
+    info_ram = obtener_info_ram()
+    info_disco = obtener_info_disco()
+    info_sistema = obtener_info_sistema()
+    info_temperaturas = obtener_temperaturas_hardware()
+    info_tipo_ram = obtener_infoqram()
+
+    prompt = "He escaneado un sistema con las siguientes características:\n\n"
+    prompt += (
+        f"- **Procesador**: {info_procesador['Nombre']}\n"
+        f"  - Frecuencia Base: {info_procesador['Frecuencia Base (GHz)']} GHz\n"
+        f"  - Frecuencia Máxima: {info_procesador['Frecuencia Máxima (GHz)']} GHz\n"
+        f"  - Frecuencia Actual: {info_procesador['Frecuencia Actual (GHz)']} GHz\n"
+        f"  - Núcleos Físicos: {info_procesador['Núcleos Físicos']}\n"
+        f"  - Núcleos Lógicos: {info_procesador['Núcleos Lógicos']}\n\n"
+    )
+    prompt += (
+        "- **Memoria RAM**:\n"
+        f"  - RAM Total: {info_ram['RAM Total (GB)']} GB\n"
+        f"  - RAM Usada: {info_ram['RAM Usada (GB)']} GB\n"
+        f"  - RAM Libre: {info_ram['RAM Libre (GB)']} GB\n"
+        f"  - Uso de RAM: {info_ram['Uso de RAM (%)']}%\n"
+    )
+    if info_tipo_ram and not isinstance(info_tipo_ram[0], dict) and "Error" not in info_tipo_ram[0]:
+        for idx, ram in enumerate(info_tipo_ram):
+            prompt += f"  - Módulo {idx + 1}: Tipo {ram['Tipo']}, Velocidad {ram['Velocidad (MHz)']} MHz, Capacidad {ram['Capacidad (GB)']} GB\n"
+    elif "Error" in info_tipo_ram[0]:
+        prompt += f"  - {info_tipo_ram[0]['Error']}\n"
+    prompt += (
+        "- **Almacenamiento**:\n"
+        f"  - Disco Total: {info_disco['Disco Total (GB)']} GB\n"
+        f"  - Disco Usado: {info_disco['Disco Usado (GB)']} GB\n"
+        f"  - Disco Libre: {info_disco['Disco Libre (GB)']} GB\n"
+        f"  - Uso del Disco: {info_disco['Uso de Disco (%)']}%\n\n"
+    )
+    if info_temperaturas and "Error" not in info_temperaturas:
+        prompt += "- **Temperaturas**:\n"
+        for sensor, temp in info_temperaturas.items():
+            prompt += f"  - {sensor}: {temp} °C\n"
+        prompt += "\n"
+    else:
+        prompt += f"- **Temperaturas**: {info_temperaturas.get('Error', 'No disponible')}\n\n"
+    prompt += (
+        "- **Información General del Sistema**:\n"
+        f"  - Sistema Operativo: {info_sistema['Sistema Operativo']}\n"
+        f"  - Arquitectura: {info_sistema['Arquitectura']}\n"
+        f"  - Tiempo de Uso del Sistema: {info_sistema['Tiempo de Uso del Sistema']}\n"
+    )
+    prompt += "\nPor favor, bríndame un consejo personalizado para optimizar este sistema.\n"
+    return prompt
 # Función para obtener consejo de la IA utilizando Gemini
 def obtener_consejo_ia(prompt):
     try:
@@ -125,23 +178,59 @@ def obtener_consejo_ia(prompt):
         return f"Error al generar el consejo: {e}"
 
 
+
+ 
 # Ventana principal (Inicio)
 def ventana_inicio():
+    from PIL import Image, ImageTk  # Asegúrate de que solo importas lo necesario
+
     def abrir_analisis():
         ventana.destroy()
         ventana_analisis()
 
     ventana = tk.Tk()
     ventana.title("Inicio - Benchmark del Sistema")
-    ventana.geometry("400x300")
+    ventana.geometry("450x600")  # Establecer el tamaño de la ventana a 450x600
 
-    label_titulo = tk.Label(ventana, text="Bienvenido al Benchmark del Sistema", font=("Arial", 14), pady=20)
+    # Cargar y redimensionar la imagen de fondo
+    try:
+        fondo = Image.open("C:\\Users\\casa\\Pictures\\modelo.png")  # Cambia esto por la ruta de tu imagen de fondo
+        fondo = fondo.resize((450, 600), Image.LANCZOS)  # Redimensionar usando LANCZOS
+        fondo_tk = ImageTk.PhotoImage(fondo)  # Convertir a formato compatible con Tkinter
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo cargar la imagen de fondo: {e}")
+        return
+
+    # Etiqueta para la imagen de fondo
+    label_fondo = tk.Label(ventana, image=fondo_tk)
+    label_fondo.image = fondo_tk  # Evitar que la imagen sea recolectada por el garbage collector
+    label_fondo.place(relwidth=1, relheight=1)  # Ajustar la imagen al tamaño de la ventana
+   
+    # Etiqueta del título
+    label_titulo = tk.Label(
+        ventana, 
+        text="Bienvenido al Benchmark del Sistema", 
+        font=("Arial", 14), 
+        pady=0.1, 
+        bg="white"
+    )
     label_titulo.pack()
 
-    boton_analizar = tk.Button(ventana, text="Analizar", font=("Arial", 12), command=abrir_analisis)
-    boton_analizar.pack(pady=20)
+    # Botón Analizar
+    boton_analizar = tk.Button(
+        ventana, 
+        text="Analizar", 
+        font=("Arial", 12), 
+        command=abrir_analisis
+    )
+    # Posicionarlo en la parte inferior, un poco debajo de la mitad
+    boton_analizar.place(relx=0.5, rely=0.90, anchor="center")
 
     ventana.mainloop()
+
+
+
+
 
 # Ventana de análisis
 def ventana_analisis():
@@ -157,9 +246,20 @@ def ventana_analisis():
     ventana.title("Análisis del Sistema")
     ventana.geometry("600x400")
 
-    frame_info = tk.Frame(ventana)
-    frame_info.pack(pady=10)
+    # Crear un Canvas con una barra de desplazamiento vertical
+    canvas = tk.Canvas(ventana)
+    scrollbar = tk.Scrollbar(ventana, orient="vertical", command=canvas.yview)
+    canvas.configure(yscrollcommand=scrollbar.set)
 
+    # Crear un Frame para contener los widgets dentro del canvas
+    frame_info = tk.Frame(canvas)
+
+    # Configurar la barra de desplazamiento
+    scrollbar.pack(side="right", fill="y")
+    canvas.pack(side="left", fill="both", expand=True)
+    canvas.create_window((0, 0), window=frame_info, anchor="nw")
+
+    # Agregar los elementos dentro del frame_info
     label_titulo = tk.Label(frame_info, text="Resultados del Análisis", font=("Arial", 14))
     label_titulo.pack()
 
@@ -172,17 +272,21 @@ def ventana_analisis():
         "RAM": info_ram,
         "Disco": info_disco,
     }.items():
-        frame_categoria = tk.LabelFrame(ventana, text=categoria, padx=10, pady=10)
+        frame_categoria = tk.LabelFrame(frame_info, text=categoria, padx=10, pady=10)
         frame_categoria.pack(fill="x", padx=10, pady=5)
         for clave, valor in datos.items():
             label = tk.Label(frame_categoria, text=f"{clave}: {valor}")
             label.pack(anchor="w")
 
-    boton_consejo = tk.Button(ventana, text="Dame un consejo", command=mostrar_consejo)
+    boton_consejo = tk.Button(frame_info, text="Dame un consejo", command=mostrar_consejo)
     boton_consejo.pack(pady=10)
 
-    boton_volver = tk.Button(ventana, text="Volver al inicio", command=volver_inicio)
+    boton_volver = tk.Button(frame_info, text="Volver al inicio", command=volver_inicio)
     boton_volver.pack(pady=10)
+
+    # Actualizar el tamaño del frame_info para ajustarse al contenido
+    frame_info.update_idletasks()
+    canvas.config(scrollregion=canvas.bbox("all"))
 
     ventana.mainloop()
 
@@ -196,16 +300,88 @@ def ventana_consejo():
     ventana.title("Consejo con IA")
     ventana.geometry("400x300")
 
-    # Generar un consejo utilizando la API de Gemini
-    consejo_generado = obtener_consejo_ia("Dame un consejo para optimizar el rendimiento del sistema:")
+    # Crear un Canvas con una barra de desplazamiento vertical
+    canvas = tk.Canvas(ventana)
+    scrollbar = tk.Scrollbar(ventana, orient="vertical", command=canvas.yview)
+    canvas.configure(yscrollcommand=scrollbar.set)
 
-    label_consejo = tk.Label(ventana, text=consejo_generado, font=("Arial", 12), wraplength=380, pady=20)
+    # Crear un Frame para contener los widgets dentro del canvas
+    frame_consejo = tk.Frame(canvas)
+
+    # Configurar la barra de desplazamiento
+    scrollbar.pack(side="right", fill="y")
+    canvas.pack(side="left", fill="both", expand=True)
+    canvas.create_window((0, 0), window=frame_consejo, anchor="nw")
+    
+    info_procesador = obtener_info_procesador()
+    info_ram = obtener_info_ram()
+    info_disco = obtener_info_disco()
+    info_sistema = obtener_info_sistema()
+    info_temperaturas = obtener_temperaturas_hardware()
+    info_tipo_ram = obtener_infoqram()
+    consejo_generado = obtener_consejo_ia(
+    """He escaneado un sistema con las siguientes características:
+
+    - **Procesador**: {Nombre}
+      - Frecuencia Base: {Frecuencia_Base} GHz
+      - Frecuencia Máxima: {Frecuencia_Maxima} GHz
+      - Frecuencia Actual: {Frecuencia_Actual} GHz
+      - Núcleos Físicos: {Nucleos_Fisicos}
+      - Núcleos Lógicos: {Nucleos_Logicos}
+
+    - **Memoria RAM**:
+      - RAM Total: {RAM_Total} GB
+      - RAM Usada: {RAM_Usada} GB
+      - RAM Libre: {RAM_Libre} GB
+      - Uso de RAM: {Uso_RAM}%
+
+    - **Almacenamiento**:
+      - Disco Total: {Disco_Total} GB
+      - Disco Usado: {Disco_Usado} GB
+      - Disco Libre: {Disco_Libre} GB
+      - Uso del Disco: {Uso_Disco}%
+
+    - **Información General del Sistema**:
+      - Sistema Operativo: {Sistema_Operativo}
+      - Arquitectura: {Arquitectura}
+      - Tiempo de Uso del Sistema: {Tiempo_Uso}
+
+    Por favor, bríndame un consejo personalizado para optimizar este sistema.
+    """.format(
+        Nombre=info_procesador["Nombre"],
+        Frecuencia_Base=info_procesador["Frecuencia Base (GHz)"],
+        Frecuencia_Maxima=info_procesador["Frecuencia Máxima (GHz)"],
+        Frecuencia_Actual=info_procesador["Frecuencia Actual (GHz)"],
+        Nucleos_Fisicos=info_procesador["Núcleos Físicos"],
+        Nucleos_Logicos=info_procesador["Núcleos Lógicos"],
+        RAM_Total=info_ram["RAM Total (GB)"],
+        RAM_Usada=info_ram["RAM Usada (GB)"],
+        RAM_Libre=info_ram["RAM Libre (GB)"],
+        Uso_RAM=info_ram["Uso de RAM (%)"],
+        Disco_Total=info_disco["Disco Total (GB)"],
+        Disco_Usado=info_disco["Disco Usado (GB)"],
+        Disco_Libre=info_disco["Disco Libre (GB)"],
+        Uso_Disco=info_disco["Uso de Disco (%)"],
+        Sistema_Operativo=info_sistema["Sistema Operativo"],
+        Arquitectura=info_sistema["Arquitectura"],
+        Tiempo_Uso=info_sistema["Tiempo de Uso del Sistema"]
+    )
+    )
+
+
+
+    label_consejo = tk.Label(frame_consejo, text=consejo_generado, font=("Arial", 12), wraplength=380, pady=20)
     label_consejo.pack()
 
-    boton_volver = tk.Button(ventana, text="Volver al inicio", command=volver_inicio)
+    boton_volver = tk.Button(frame_consejo, text="Volver al inicio", command=volver_inicio)
     boton_volver.pack(pady=20)
 
+    # Actualizar el tamaño del frame_consejo para ajustarse al contenido
+    frame_consejo.update_idletasks()
+    canvas.config(scrollregion=canvas.bbox("all"))
+
     ventana.mainloop()
+
 
 # Ejecutar la aplicación
 if __name__ == "__main__":
