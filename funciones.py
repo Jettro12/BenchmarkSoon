@@ -1,33 +1,7 @@
-import tkinter as tk
-from tkinter import messagebox
 import psutil
 import platform
 from datetime import timedelta
-import clr  # Necesario para usar OpenHardwareMonitor
-import os
-#Necesarias para el api de Gemini
-import requests
-from dotenv import load_dotenv
-import google.generativeai as genai
-
-# Ruta al DLL de OpenHardwareMonitor
-dll_path = r"C:\Users\ErickMau\Downloads\openhardwaremonitor-v0.9.6\OpenHardwareMonitor\OpenHardwareMonitorLib.dll"
-if not os.path.exists(dll_path):
-    raise FileNotFoundError(f"No se encontró el archivo DLL en la ruta: {dll_path}")
-
-clr.AddReference(dll_path)
-from OpenHardwareMonitor import Hardware
-
-
-# Cargar las variables desde el archivo .env
-load_dotenv()
-
-# Obtener la API Key desde las variables de entorno
-api_key = os.getenv("API_KEY")
-
-# Configurar la API Key
-genai.configure(api_key=api_key)
-model = genai.GenerativeModel("gemini-2.0-flash-exp")
+from configuraciones import Hardware, model
 
 # Función para obtener información del procesador
 def obtener_info_procesador():
@@ -42,7 +16,6 @@ def obtener_info_procesador():
     }
 
 # Función para obtener información de la RAM
-
 def obtener_info_ram():
     ram_info = psutil.virtual_memory()
     return {
@@ -72,6 +45,7 @@ def obtener_infoqram():
     except Exception as e:
         return [{"Error": f"No se pudo obtener información de la RAM: {e}"}]
 
+# Función para obtener información del disco
 def obtener_info_disco():
     disco_info = psutil.disk_usage('/')
     return {
@@ -81,8 +55,7 @@ def obtener_info_disco():
         "Uso de Disco (%)": disco_info.percent,
     }
 
-
-# Función para obtener las temperaturas del hardware
+# Función para obtener temperaturas del hardware
 def obtener_temperaturas_hardware():
     try:
         computer = Hardware.Computer()
@@ -115,6 +88,38 @@ def obtener_info_sistema():
         "Tiempo de Uso del Sistema": str(timedelta(seconds=psutil.boot_time())),
     }
 
+# Función para generar el prompt personalizado
+def generar_prompt_personalizado():
+    info_procesador = obtener_info_procesador()
+    info_ram = obtener_info_ram()
+    info_disco = obtener_info_disco()
+
+    prompt = "He escaneado un sistema con las siguientes características:\n\n"
+    prompt += (
+        f"- **Procesador**: {info_procesador['Nombre']}\n"
+        f"  - Frecuencia Base: {info_procesador['Frecuencia Base (GHz)']} GHz\n"
+        f"  - Frecuencia Máxima: {info_procesador['Frecuencia Máxima (GHz)']} GHz\n"
+        f"  - Frecuencia Actual: {info_procesador['Frecuencia Actual (GHz)']} GHz\n"
+        f"  - Núcleos Físicos: {info_procesador['Núcleos Físicos']}\n"
+        f"  - Núcleos Lógicos: {info_procesador['Núcleos Lógicos']}\n\n"
+    )
+    prompt += (
+        "- **Memoria RAM**:\n"
+        f"  - RAM Total: {info_ram['RAM Total (GB)']} GB\n"
+        f"  - RAM Usada: {info_ram['RAM Usada (GB)']} GB\n"
+        f"  - RAM Libre: {info_ram['RAM Libre (GB)']} GB\n"
+        f"  - Uso de RAM: {info_ram['Uso de RAM (%)']}%\n\n"
+    )
+    prompt += (
+        "- **Almacenamiento**:\n"
+        f"  - Disco Total: {info_disco['Disco Total (GB)']} GB\n"
+        f"  - Disco Usado: {info_disco['Disco Usado (GB)']} GB\n"
+        f"  - Disco Libre: {info_disco['Disco Libre (GB)']} GB\n"
+        f"  - Uso del Disco: {info_disco['Uso de Disco (%)']}%\n"
+    )
+    prompt += "\nPor favor, bríndame un consejo personalizado para optimizar este sistema.\n"
+    return prompt
+
 # Función para obtener consejo de la IA utilizando Gemini
 def obtener_consejo_ia(prompt):
     try:
@@ -123,90 +128,3 @@ def obtener_consejo_ia(prompt):
         return response.text
     except Exception as e:
         return f"Error al generar el consejo: {e}"
-
-
-# Ventana principal (Inicio)
-def ventana_inicio():
-    def abrir_analisis():
-        ventana.destroy()
-        ventana_analisis()
-
-    ventana = tk.Tk()
-    ventana.title("Inicio - Benchmark del Sistema")
-    ventana.geometry("400x300")
-
-    label_titulo = tk.Label(ventana, text="Bienvenido al Benchmark del Sistema", font=("Arial", 14), pady=20)
-    label_titulo.pack()
-
-    boton_analizar = tk.Button(ventana, text="Analizar", font=("Arial", 12), command=abrir_analisis)
-    boton_analizar.pack(pady=20)
-
-    ventana.mainloop()
-
-# Ventana de análisis
-def ventana_analisis():
-    def mostrar_consejo():
-        ventana.destroy()
-        ventana_consejo()
-
-    def volver_inicio():
-        ventana.destroy()
-        ventana_inicio()
-
-    ventana = tk.Tk()
-    ventana.title("Análisis del Sistema")
-    ventana.geometry("600x400")
-
-    frame_info = tk.Frame(ventana)
-    frame_info.pack(pady=10)
-
-    label_titulo = tk.Label(frame_info, text="Resultados del Análisis", font=("Arial", 14))
-    label_titulo.pack()
-
-    info_procesador = obtener_info_procesador()
-    info_ram = obtener_info_ram()
-    info_disco = obtener_info_disco()
-
-    for categoria, datos in {
-        "Procesador": info_procesador,
-        "RAM": info_ram,
-        "Disco": info_disco,
-    }.items():
-        frame_categoria = tk.LabelFrame(ventana, text=categoria, padx=10, pady=10)
-        frame_categoria.pack(fill="x", padx=10, pady=5)
-        for clave, valor in datos.items():
-            label = tk.Label(frame_categoria, text=f"{clave}: {valor}")
-            label.pack(anchor="w")
-
-    boton_consejo = tk.Button(ventana, text="Dame un consejo", command=mostrar_consejo)
-    boton_consejo.pack(pady=10)
-
-    boton_volver = tk.Button(ventana, text="Volver al inicio", command=volver_inicio)
-    boton_volver.pack(pady=10)
-
-    ventana.mainloop()
-
-# Ventana de consejos
-def ventana_consejo():
-    def volver_inicio():
-        ventana.destroy()
-        ventana_inicio()
-
-    ventana = tk.Tk()
-    ventana.title("Consejo con IA")
-    ventana.geometry("400x300")
-
-    # Generar un consejo utilizando la API de Gemini
-    consejo_generado = obtener_consejo_ia("Dame un consejo para optimizar el rendimiento del sistema:")
-
-    label_consejo = tk.Label(ventana, text=consejo_generado, font=("Arial", 12), wraplength=380, pady=20)
-    label_consejo.pack()
-
-    boton_volver = tk.Button(ventana, text="Volver al inicio", command=volver_inicio)
-    boton_volver.pack(pady=20)
-
-    ventana.mainloop()
-
-# Ejecutar la aplicación
-if __name__ == "__main__":
-    ventana_inicio()
