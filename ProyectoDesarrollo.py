@@ -12,7 +12,7 @@ from PIL import Image, ImageTk
 import google.generativeai as genai
 
 # Ruta al DLL de OpenHardwareMonitor
-dll_path = r"C:\Users\casa\Downloads\openhardwaremonitor-v0.9.6\OpenHardwareMonitor\OpenHardwareMonitorLib.dll"
+dll_path = r"C:\Users\ramse\Downloads\OpenHardwareMonitor\OpenHardwareMonitorLib.dll"
 if not os.path.exists(dll_path):
     raise FileNotFoundError(f"No se encontró el archivo DLL en la ruta: {dll_path}")
 
@@ -191,10 +191,11 @@ def ventana_inicio():
     ventana = tk.Tk()
     ventana.title("Inicio - Benchmark del Sistema")
     ventana.geometry("450x600")  # Establecer el tamaño de la ventana a 450x600
+    ventana.config(bg="#1E1E2F")
 
     # Cargar y redimensionar la imagen de fondo
     try:
-        fondo = Image.open("C:\\Users\\casa\\Pictures\\modelo.png")  # Cambia esto por la ruta de tu imagen de fondo
+        fondo = Image.open("BenchmarkSoon\Media\Atenea.jpg")  # Cambia esto por la ruta de tu imagen de fondo
         fondo = fondo.resize((450, 600), Image.LANCZOS)  # Redimensionar usando LANCZOS
         fondo_tk = ImageTk.PhotoImage(fondo)  # Convertir a formato compatible con Tkinter
     except Exception as e:
@@ -210,17 +211,28 @@ def ventana_inicio():
     label_titulo = tk.Label(
         ventana, 
         text="Bienvenido al Benchmark del Sistema", 
-        font=("Arial", 14), 
+        font=("Verdana", 20, "bold"), 
         pady=0.1, 
-        bg="white"
+        fg="#FFD700",
+        bg="#1E1E2F"
     )
-    label_titulo.pack()
+    label_titulo.place(relx=0.5, rely=0.2, anchor="center")
 
+    try:
+        imagen_boton = Image.open("BenchmarkSoon\Media\Boton1.webp")  # Cambia esto por la ruta de tu imagen de fondo
+        imagen_boton = imagen_boton.resize((150, 50), Image.LANCZOS)  # Redimensionar usando LANCZOS
+        imagen_boton_tk = ImageTk.PhotoImage(imagen_boton)  # Convertir a formato compatible con Tkinter
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo cargar la imagen de fondo: {e}")
+        return
+    
     # Botón Analizar
     boton_analizar = tk.Button(
-        ventana, 
-        text="Analizar", 
-        font=("Arial", 12), 
+        ventana,
+        image=imagen_boton_tk,
+        bg="#1E1E2F",
+        borderwidth=0,
+        highlightthickness=0,
         command=abrir_analisis
     )
     # Posicionarlo en la parte inferior, un poco debajo de la mitad
@@ -245,6 +257,7 @@ def ventana_analisis():
     ventana = tk.Tk()
     ventana.title("Análisis del Sistema")
     ventana.geometry("600x400")
+    ventana.configure(bg="#1E1E2F")
 
     # Crear un Canvas con una barra de desplazamiento vertical
     canvas = tk.Canvas(ventana)
@@ -260,8 +273,8 @@ def ventana_analisis():
     canvas.create_window((0, 0), window=frame_info, anchor="nw")
 
     # Agregar los elementos dentro del frame_info
-    label_titulo = tk.Label(frame_info, text="Resultados del Análisis", font=("Arial", 14))
-    label_titulo.pack()
+    label_titulo = tk.Label(frame_info, text="Resultados del Análisis", font=("Verdana", 20, "bold"), fg="#FFD700", bg="#1E1E2F")
+    label_titulo.pack(pady=20)
 
     info_procesador = obtener_info_procesador()
     info_ram = obtener_info_ram()
@@ -272,16 +285,18 @@ def ventana_analisis():
         "RAM": info_ram,
         "Disco": info_disco,
     }.items():
-        frame_categoria = tk.LabelFrame(frame_info, text=categoria, padx=10, pady=10)
-        frame_categoria.pack(fill="x", padx=10, pady=5)
+        frame_categoria = tk.LabelFrame(frame_info, text=categoria, padx=10, pady=10, bg="#2E2E3E")
+        frame_categoria.pack(fill="both", padx=20, pady=20, expand=True)
         for clave, valor in datos.items():
-            label = tk.Label(frame_categoria, text=f"{clave}: {valor}")
-            label.pack(anchor="w")
+            label = tk.Label(frame_categoria, text=f"{clave}: {valor}", font=("Verdana", 14), fg="white", bg="#2E2E3E")
+            label.pack(anchor="w", pady=5)
 
-    boton_consejo = tk.Button(frame_info, text="Dame un consejo", command=mostrar_consejo)
+    boton_consejo = tk.Button(frame_info, text="Dame un consejo", font=("Verdana", 14), bg="#4CAF50", fg="white",
+                              activebackground="#45A049", activeforeground="white", command=mostrar_consejo)
     boton_consejo.pack(pady=10)
 
-    boton_volver = tk.Button(frame_info, text="Volver al inicio", command=volver_inicio)
+    boton_volver = tk.Button(frame_info, text="Volver al inicio", font=("verdana", 14), bg="#F44336", fg="white",
+                             activebackground="#D32F2F", activeforeground="white", command=volver_inicio)
     boton_volver.pack(pady=10)
 
     # Actualizar el tamaño del frame_info para ajustarse al contenido
@@ -370,10 +385,11 @@ def ventana_consejo():
 
 
 
-    label_consejo = tk.Label(frame_consejo, text=consejo_generado, font=("Arial", 12), wraplength=380, pady=20)
+    label_consejo = tk.Label(frame_consejo, text=consejo_generado, font=("Verdana", 14), wraplength=380, pady=20)
     label_consejo.pack()
 
-    boton_volver = tk.Button(frame_consejo, text="Volver al inicio", command=volver_inicio)
+    boton_volver = tk.Button(frame_consejo, text="Volver al inicio", font=("verdana", 14), bg="#F44336", fg="white",
+                             activebackground="#D32F2F", activeforeground="white", command=volver_inicio)
     boton_volver.pack(pady=20)
 
     # Actualizar el tamaño del frame_consejo para ajustarse al contenido
