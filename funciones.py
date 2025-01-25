@@ -1,5 +1,3 @@
-import tkinter as tk
-from tkinter import messagebox
 import psutil
 import platform
 from datetime import timedelta
@@ -43,7 +41,6 @@ def obtener_info_procesador():
     }
 
 # Función para obtener información de la RAM
-
 def obtener_info_ram():
     ram_info = psutil.virtual_memory()
     return {
@@ -73,6 +70,7 @@ def obtener_infoqram():
     except Exception as e:
         return [{"Error": f"No se pudo obtener información de la RAM: {e}"}]
 
+# Función para obtener información del disco
 def obtener_info_disco():
     disco_info = psutil.disk_usage('/')
     return {
@@ -82,8 +80,7 @@ def obtener_info_disco():
         "Uso de Disco (%)": disco_info.percent,
     }
 
-
-# Función para obtener las temperaturas del hardware
+# Función para obtener temperaturas del hardware
 def obtener_temperaturas_hardware():
     try:
         computer = Hardware.Computer()
@@ -194,7 +191,7 @@ def ventana_inicio():
 
     # Cargar y redimensionar la imagen de fondo
     try:
-        fondo = Image.open("C:\\Users\\casa\\Pictures\\modelo.png")  # Cambia esto por la ruta de tu imagen de fondo
+        fondo = Image.open("C:\\Users\\casa\\Proyectodesarrollo\\Media\\modelo1.png")  # Cambia esto por la ruta de tu imagen de fondo
         fondo = fondo.resize((450, 600), Image.LANCZOS)  # Redimensionar usando LANCZOS
         fondo_tk = ImageTk.PhotoImage(fondo)  # Convertir a formato compatible con Tkinter
     except Exception as e:
