@@ -1,75 +1,66 @@
-import os
 import psutil
 import platform
-import clr
-from tkinter import Tk
-from tkinter.messagebox import showerror
-import ttkbootstrap as tb
-from ttkbootstrap.constants import *
-from PIL import Image, ImageTk
-from dotenv import load_dotenv
-import google.generativeai as genai
+from configuraciones import Hardware, model
 
-# --- Configuración y Carga de Dependencias ---
-# Ruta al DLL de OpenHardwareMonitor
-DLL_PATH = r"C:\Users\ErickMau\Downloads\openhardwaremonitor-v0.9.6\OpenHardwareMonitor\OpenHardwareMonitorLib.dll"
-if not os.path.exists(DLL_PATH):
-    raise FileNotFoundError(f"No se encontró el archivo DLL en la ruta: {DLL_PATH}")
-clr.AddReference(DLL_PATH)
-from OpenHardwareMonitor import Hardware
-
-# Cargar configuración desde .env
-load_dotenv()
-API_KEY = os.getenv("API_KEY")
-if not API_KEY:
-    raise ValueError("La clave API_KEY no está configurada en el archivo .env.")
-
-genai.configure(api_key=API_KEY)
-MODEL = genai.GenerativeModel("gemini-2.0-flash-exp")
-
-GB = 1024 ** 3  # Conversión de bytes a GB
-
-# --- Funciones de Información del Sistema ---
 def obtener_info_procesador():
-    try:
-        return {
-            "Procesador": platform.processor(),
-            "Núcleos Físicos": psutil.cpu_count(logical=False),
-            "Núcleos Lógicos": psutil.cpu_count(logical=True),
-        }
-    except Exception as e:
-        return {"Error al obtener el procesador": str(e)}
+    cpu_freq = psutil.cpu_freq()
+    return {
+        "Nombre": platform.processor(),
+        "Frecuencia Base (GHz)": round(cpu_freq.min / 1000, 2) if cpu_freq else "No disponible",
+        "Frecuencia Máxima (GHz)": round(cpu_freq.max / 1000, 2) if cpu_freq else "No disponible",
+        "Frecuencia Actual (GHz)": round(cpu_freq.current / 1000, 2) if cpu_freq else "No disponible",
+        "Núcleos Físicos": psutil.cpu_count(logical=False),
+        "Núcleos Lógicos": psutil.cpu_count(logical=True),
+    }
 
 def obtener_info_ram():
-    try:
-        ram = psutil.virtual_memory()
-        return {
-            "RAM Total": f"{ram.total / GB:.2f} GB",
-            "RAM Disponible": f"{ram.available / GB:.2f} GB",
-        }
-    except Exception as e:
-        return {"Error al obtener la RAM": str(e)}
+    ram_info = psutil.virtual_memory()
+    return {
+        "RAM Total (GB)": round(ram_info.total / (1024 ** 3), 2),
+        "RAM Usada (GB)": round(ram_info.used / (1024 ** 3), 2),
+        "RAM Libre (GB)": round(ram_info.available / (1024 ** 3), 2),
+        "Uso de RAM (%)": ram_info.percent,
+    }
 
 def obtener_info_disco():
-    try:
-        disco = psutil.disk_usage('/')
-        return {
-            "Espacio Total": f"{disco.total / GB:.2f} GB",
-            "Espacio Usado": f"{disco.used / GB:.2f} GB",
-            "Espacio Libre": f"{disco.free / GB:.2f} GB",
-        }
-    except Exception as e:
-        return {"Error al obtener el disco": str(e)}
+    disco_info = psutil.disk_usage('/')
+    return {
+        "Disco Total (GB)": round(disco_info.total / (1024 ** 3), 2),
+        "Disco Usado (GB)": round(disco_info.used / (1024 ** 3), 2),
+        "Disco Libre (GB)": round(disco_info.free / (1024 ** 3), 2),
+        "Uso de Disco (%)": disco_info.percent,
+    }
 
-def generar_prompt_personalizado():
-    return (
-        "Basado en el análisis del sistema, se han detectado las siguientes configuraciones: "
-        "procesador, memoria RAM y espacio en disco. Sugiere optimizaciones para mejorar el rendimiento."
+def generar_prompt_personalizado(info_procesador, info_ram, info_disco):
+    prompt = "He escaneado un sistema con las siguientes características:\n\n"
+    prompt += (
+        f"- **Procesador**: {info_procesador['Nombre']}\n"
+        f"  - Frecuencia Base: {info_procesador['Frecuencia Base (GHz)']} GHz\n"
+        f"  - Frecuencia Máxima: {info_procesador['Frecuencia Máxima (GHz)']} GHz\n"
+        f"  - Frecuencia Actual: {info_procesador['Frecuencia Actual (GHz)']} GHz\n"
+        f"  - Núcleos Físicos: {info_procesador['Núcleos Físicos']}\n"
+        f"  - Núcleos Lógicos: {info_procesador['Núcleos Lógicos']}\n\n"
     )
+    prompt += (
+        "- **Memoria RAM**:\n"
+        f"  - RAM Total: {info_ram['RAM Total (GB)']} GB\n"
+        f"  - RAM Usada: {info_ram['RAM Usada (GB)']} GB\n"
+        f"  - RAM Libre: {info_ram['RAM Libre (GB)']} GB\n"
+        f"  - Uso de RAM: {info_ram['Uso de RAM (%)']}%\n\n"
+    )
+    prompt += (
+        "- **Almacenamiento**:\n"
+        f"  - Disco Total: {info_disco['Disco Total (GB)']} GB\n"
+        f"  - Disco Usado: {info_disco['Disco Usado (GB)']} GB\n"
+        f"  - Disco Libre: {info_disco['Disco Libre (GB)']} GB\n"
+        f"  - Uso del Disco: {info_disco['Uso de Disco (%)']}%\n"
+    )
+    prompt += "\nPor favor, bríndame un consejo personalizado para optimizar este sistema.\n"
+    return prompt
 
 def obtener_consejo_ia(prompt):
     try:
-        respuesta = MODEL.start_chat(prompt=prompt)
-        return respuesta.generations[0].text.strip()
+        response = model.generate_content(prompt)
+        return response.text
     except Exception as e:
-        return f"Error al obtener consejo de IA: {e}"
+        return f"Error al generar el consejo: {e}"
