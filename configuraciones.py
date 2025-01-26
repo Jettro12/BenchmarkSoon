@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import google.generativeai as genai
 
 # Ruta al DLL de OpenHardwareMonitor
-dll_path = r"C:\Users\casa\Downloads\openhardwaremonitor-v0.9.6\OpenHardwareMonitor\OpenHardwareMonitorLib.dll"
+dll_path = r"C:\Users\ErickMau\Downloads\openhardwaremonitor-v0.9.6\OpenHardwareMonitor\OpenHardwareMonitorLib.dll"
 if not os.path.exists(dll_path):
     raise FileNotFoundError(f"No se encontró el archivo DLL en la ruta: {dll_path}")
 
@@ -18,3 +18,4 @@ load_dotenv()
 api_key = os.getenv("API_KEY")
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel("gemini-2.0-flash-exp")
+
