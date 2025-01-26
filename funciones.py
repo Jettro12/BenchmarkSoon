@@ -12,7 +12,7 @@ import google.generativeai as genai
 
 # --- Configuración y Carga de Dependencias ---
 # Ruta al DLL de OpenHardwareMonitor
-DLL_PATH = r"C:\Users\casa\Downloads\openhardwaremonitor-v0.9.6\OpenHardwareMonitor\OpenHardwareMonitorLib.dll"
+DLL_PATH = r"C:\Users\ErickMau\Downloads\openhardwaremonitor-v0.9.6\OpenHardwareMonitor\OpenHardwareMonitorLib.dll"
 if not os.path.exists(DLL_PATH):
     raise FileNotFoundError(f"No se encontró el archivo DLL en la ruta: {DLL_PATH}")
 clr.AddReference(DLL_PATH)

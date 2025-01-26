@@ -10,8 +10,10 @@ class VentanaPrincipal:
     def __init__(self, root):
         self.root = root
         self.root.title("Benchmark del Sistema")
-        self.style = tb.Style("superhero")
-        self.root.geometry("1200x800")
+        self.style = tb.Style("vapor")
+        pantalla_ancho = self.root.winfo_screenwidth()
+        pantalla_alto = self.root.winfo_screenheight()
+        self.root.geometry(f"{pantalla_ancho}x{pantalla_alto}")
 
         self.contenedor = tb.Frame(self.root)
         self.contenedor.pack(fill=BOTH, expand=True)
