@@ -10,6 +10,14 @@ from funciones import (
 )
 from tkinter.messagebox import showerror
 from tkinter import BOTH, X, Y, END, VERTICAL, RIGHT, LEFT, BOTTOM
+from configuraciones import (
+    ESTILO_BOTON_PRIMARIO,
+    ESTILO_BOTON_SECUNDARIO,
+    ESTILO_LABEL_TITULO,
+    ESTILO_LABEL_TEXTO,
+    ESTILO_TEXTO_CONSEJO,
+    ESTILO_LABEL_CATEGORIA,
+)
 
 class VentanaPrincipal:
     def __init__(self, root):
@@ -50,16 +58,20 @@ class VentanaPrincipal:
             showerror("Error", f"No se pudo cargar la imagen de fondo: {e}")
             return
 
+        
         label_titulo = tb.Label(
             self.contenedor,
             text="Bienvenido al Benchmark del Sistema",
-            font=("Helvetica", 26, "bold"),
-            bootstyle="primary",
+            **ESTILO_LABEL_TITULO,  # Aplicar estilo de título
         )
         label_titulo.pack(pady=20)
 
+        
         boton_analizar = tb.Button(
-            self.contenedor, text="Analizar", bootstyle="success", command=self.ventana_analisis
+            self.contenedor,
+            text="Analizar",
+            command=self.ventana_analisis,
+            style="Primary.TButton",  # Aplicar estilo primario
         )
         boton_analizar.place(relx=0.5, rely=0.8, anchor="center")
 
@@ -100,11 +112,19 @@ class VentanaPrincipal:
                 )
                 frame_categoria.place(x=x, y=y, width=200, height=100)
                 for clave, valor in datos.items():
-                    label = tb.Label(frame_categoria, text=f"{clave}: {valor}")
+                    label = tb.Label(
+                    frame_categoria,
+                    text=f"{clave}: {valor}",
+                    **ESTILO_LABEL_TEXTO,  # Aplicar estilo de texto normal
+                    )
                     label.pack(anchor="w")
 
+            
             boton_consejo = tb.Button(
-                self.contenedor, text="Dame un consejo Atenea", bootstyle="danger", command=self.ventana_consejo
+                self.contenedor,
+                text="Dame un consejo Atenea",
+                command=self.ventana_consejo,
+                style="Primary.TButton",  # Aplicar estilo primario
             )
             boton_consejo.place(x=500, y=700)
 
@@ -140,12 +160,20 @@ class VentanaPrincipal:
             frame_interno = tb.Frame(canvas)
             canvas.create_window((0, 0), window=frame_interno, anchor="nw")
 
-            label_consejo = tb.Label(frame_interno, text="Consejo de Optimización:", font=("Arial", 14))
+            
+            label_consejo = tb.Label(
+                frame_interno,
+                text="Consejo de Optimización:",
+                **ESTILO_LABEL_TITULO,  # Aplicar estilo de título
+            )
             label_consejo.pack(pady=10)
 
-            texto_consejo = tb.Text(frame_interno, wrap="word", height=15, width=80, state="normal")
-            texto_consejo.insert(END, consejo)
-            texto_consejo.config(state="disabled")
+            
+            texto_consejo = tb.Label(
+                frame_interno,
+                text=consejo,
+                **ESTILO_TEXTO_CONSEJO,  # Aplicar estilo de texto de consejo
+            )
             texto_consejo.pack(pady=10)
 
         except Exception as e:
@@ -161,15 +189,24 @@ class VentanaPrincipal:
         frame_botones = tb.Frame(self.contenedor)
         frame_botones.pack(fill=X, padx=10, pady=10)
 
+        # Aplicar estilo secundario al botón "Volver al inicio"
         boton_volver = tb.Button(
-            frame_botones, text="Volver al inicio", bootstyle="danger", command=self.ventana_inicio
+            frame_botones,
+            text="Volver al inicio",
+            command=self.ventana_inicio,
+            style="Secondary.TButton",  # Aplicar estilo secundario
         )
         boton_volver.pack(side=LEFT, padx=5)
 
+        # Aplicar estilo secundario al botón "Salir"
         boton_salir = tb.Button(
-            frame_botones, text="Salir", bootstyle="danger", command=self.root.quit
+            frame_botones,
+            text="Salir",
+            command=self.root.quit,
+            style="Secondary.TButton",  # Aplicar estilo secundario
         )
         boton_salir.pack(side=RIGHT, padx=5)
+
 
     def chatbot_seccion(self, frame_chatbot):
         """Agrega la sección de chatbot a la ventana."""
