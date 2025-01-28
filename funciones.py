@@ -1,6 +1,8 @@
 import psutil
 import platform
-from configuraciones import Hardware, model
+from configuraciones import model
+import GPUtil
+import pynvml
 
 def obtener_info_procesador():
     cpu_freq = psutil.cpu_freq()
@@ -31,7 +33,36 @@ def obtener_info_disco():
         "Uso de Disco (%)": disco_info.percent,
     }
 
-def generar_prompt_personalizado(info_procesador, info_ram, info_disco):
+def obtener_temperaturas():
+    temperaturas = {"CPU": "No disponible", "GPU": "No disponible"}
+
+    try:
+        pynvml.nvmlInit()
+        handle = pynvml.nvmlDeviceGetHandleByIndex(0)  # Primera GPU
+        temperatura_gpu = pynvml.nvmlDeviceGetTemperature(handle, pynvml.NVML_TEMPERATURE_GPU)
+        temperaturas["GPU"] = f"{temperatura_gpu} °C"
+    except pynvml.NVMLError:
+        pass
+    finally:
+        pynvml.nvmlShutdown()
+
+    return temperaturas
+
+def obtener_info_gpu():
+    gpus = GPUtil.getGPUs()
+    if not gpus:
+        return {"GPU": "No disponible"}
+    
+    gpu = gpus[0]
+    return {
+        "Nombre": gpu.name,
+        "Carga (%)": gpu.load * 100,
+        "Memoria Usada (GB)": round(gpu.memoryUsed, 2),
+        "Memoria Total (GB)": round(gpu.memoryTotal, 2),
+        "Temperatura (°C)": gpu.temperature,
+    }
+
+def generar_prompt_personalizado(info_procesador, info_ram, info_disco, info_gpu, temperaturas):
     prompt = "He escaneado un sistema con las siguientes características:\n\n"
     prompt += (
         f"- **Procesador**: {info_procesador['Nombre']}\n"
@@ -40,6 +71,7 @@ def generar_prompt_personalizado(info_procesador, info_ram, info_disco):
         f"  - Frecuencia Actual: {info_procesador['Frecuencia Actual (GHz)']} GHz\n"
         f"  - Núcleos Físicos: {info_procesador['Núcleos Físicos']}\n"
         f"  - Núcleos Lógicos: {info_procesador['Núcleos Lógicos']}\n\n"
+        f"  - Temperatura: {temperaturas['CPU']}\n\n"
     )
     prompt += (
         "- **Memoria RAM**:\n"
@@ -56,6 +88,17 @@ def generar_prompt_personalizado(info_procesador, info_ram, info_disco):
         f"  - Uso del Disco: {info_disco['Uso de Disco (%)']}%\n"
     )
     prompt += "\nPor favor, bríndame un consejo personalizado para optimizar este sistema.\n"
+    
+    # Información de la GPU
+    prompt += (
+        "- **GPU**:\n"
+        f"  - Nombre: {info_gpu['Nombre']}\n"
+        f"  - Carga: {info_gpu['Carga (%)']}%\n"
+        f"  - Memoria Usada: {info_gpu['Memoria Usada (GB)']} GB\n"
+        f"  - Memoria Total: {info_gpu['Memoria Total (GB)']} GB\n"
+        f"  - Temperatura: {info_gpu['Temperatura (°C)']} °C\n\n"
+    )
+    
     return prompt
 
 def obtener_consejo_ia(prompt):

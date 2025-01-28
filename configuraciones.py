@@ -3,14 +3,6 @@ import os
 from dotenv import load_dotenv
 import google.generativeai as genai
 
-# Ruta al DLL de OpenHardwareMonitor
-dll_path = r"C:\Users\ErickMau\Downloads\openhardwaremonitor-v0.9.6\OpenHardwareMonitor\OpenHardwareMonitorLib.dll"
-if not os.path.exists(dll_path):
-    raise FileNotFoundError(f"No se encontró el archivo DLL en la ruta: {dll_path}")
-
-clr.AddReference(dll_path)
-from OpenHardwareMonitor import Hardware
-
 # Cargar las variables desde el archivo .env
 load_dotenv()
 
@@ -23,12 +15,12 @@ model = genai.GenerativeModel("gemini-2.0-flash-exp")
 ESTILO_BOTON_PRIMARIO = {
     "font": ("Arial", 14, "bold"),  # Fuente del botón
     "padding": 10,  # Espacio interno
-    "background": "#4CAF50",  # Color de fondo (verde)
-    "foreground": "white",  # Color del texto (blanco)
-    "bordercolor": "#45a049",  # Color del borde
+    "background": "#1E2F59",  # Color de fondo (verde)
+    "foreground": "2E86C1",  # Color del texto (blanco)
+    "bordercolor": "#991FA6",  # Color del borde
     "borderwidth": 2,  # Grosor del borde
     "relief": "raised",  # Estilo del borde
-    "focuscolor": "#4CAF50",  # Color cuando el botón tiene el foco
+    "focuscolor": "#FF5733",  # Color cuando el botón tiene el foco
 }
 
 # Estilo para los botones de la ventana de consejos (Volver al inicio y Salir)
@@ -47,21 +39,21 @@ ESTILO_BOTON_SECUNDARIO = {
 ESTILO_LABEL_TITULO = {
     "font": ("Helvetica", 26, "bold"),  # Fuente grande y en negrita
     "foreground": "#2E86C1",  # Color del texto (azul)
-    "background": "white",  # Color de fondo
+    #"background": "white",  # Color de fondo
 }
 
 # Estilo para los labels de texto normal
 ESTILO_LABEL_TEXTO = {
     "font": ("Arial", 12),  # Fuente normal
-    "foreground": "black",  # Color del texto
-    "background": "white",  # Color de fondo
+    "foreground": "#2E86C1",  # Color del texto
+   # "background": "white",  # Color de fondo
 }
 
 # Estilo para el texto de consejos
 ESTILO_TEXTO_CONSEJO = {
     "font": ("Arial", 12),  # Fuente normal
     "foreground": "#2E86C1",  # Color del texto (azul)
-    "background": "white",  # Color de fondo
+   # "background": "white",  # Color de fondo
     "wraplength": 600,  # Ancho máximo antes de saltar de línea
 }
 
