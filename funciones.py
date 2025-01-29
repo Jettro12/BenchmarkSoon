@@ -5,33 +5,42 @@ import GPUtil
 import pynvml
 
 def obtener_info_procesador():
-    cpu_freq = psutil.cpu_freq()
-    return {
-        "Nombre": platform.processor(),
-        "Frecuencia Base (GHz)": round(cpu_freq.min / 1000, 2) if cpu_freq else "No disponible",
-        "Frecuencia Máxima (GHz)": round(cpu_freq.max / 1000, 2) if cpu_freq else "No disponible",
-        "Frecuencia Actual (GHz)": round(cpu_freq.current / 1000, 2) if cpu_freq else "No disponible",
-        "Núcleos Físicos": psutil.cpu_count(logical=False),
-        "Núcleos Lógicos": psutil.cpu_count(logical=True),
-    }
+    try:
+        cpu_freq = psutil.cpu_freq()
+        return {
+            "Nombre": platform.processor(),
+            "Frecuencia Base (GHz)": round(cpu_freq.min / 1000, 2) if cpu_freq else "No disponible",
+            "Frecuencia Máxima (GHz)": round(cpu_freq.max / 1000, 2) if cpu_freq else "No disponible",
+            "Frecuencia Actual (GHz)": round(cpu_freq.current / 1000, 2) if cpu_freq else "No disponible",
+            "Núcleos Físicos": psutil.cpu_count(logical=False),
+            "Núcleos Lógicos": psutil.cpu_count(logical=True),
+        }
+    except Exception as e:
+        return {"Error": f"Error al obtener informacion del procesador: {str(e)}"}
 
 def obtener_info_ram():
-    ram_info = psutil.virtual_memory()
-    return {
-        "RAM Total (GB)": round(ram_info.total / (1024 ** 3), 2),
-        "RAM Usada (GB)": round(ram_info.used / (1024 ** 3), 2),
-        "RAM Libre (GB)": round(ram_info.available / (1024 ** 3), 2),
-        "Uso de RAM (%)": ram_info.percent,
-    }
+    try:
+        ram_info = psutil.virtual_memory()
+        return {
+            "RAM Total (GB)": round(ram_info.total / (1024 ** 3), 2),
+            "RAM Usada (GB)": round(ram_info.used / (1024 ** 3), 2),
+            "RAM Libre (GB)": round(ram_info.available / (1024 ** 3), 2),
+            "Uso de RAM (%)": ram_info.percent,
+        }
+    except Exception as e:
+        return {"Error": f"Error al obtener informacion de la RAM: {str(e)}"}
 
 def obtener_info_disco():
-    disco_info = psutil.disk_usage('/')
-    return {
-        "Disco Total (GB)": round(disco_info.total / (1024 ** 3), 2),
-        "Disco Usado (GB)": round(disco_info.used / (1024 ** 3), 2),
-        "Disco Libre (GB)": round(disco_info.free / (1024 ** 3), 2),
-        "Uso de Disco (%)": disco_info.percent,
-    }
+    try:
+        disco_info = psutil.disk_usage('/')
+        return {
+            "Disco Total (GB)": round(disco_info.total / (1024 ** 3), 2),
+            "Disco Usado (GB)": round(disco_info.used / (1024 ** 3), 2),
+            "Disco Libre (GB)": round(disco_info.free / (1024 ** 3), 2),
+            "Uso de Disco (%)": disco_info.percent,
+        }
+    except Exception as e:
+        return {"Error": f"Error al obtener informacion del disco: {str(e)}"}
 
 def obtener_temperaturas():
     temperaturas = {"CPU": "No disponible", "GPU": "No disponible"}
@@ -41,26 +50,31 @@ def obtener_temperaturas():
         handle = pynvml.nvmlDeviceGetHandleByIndex(0)  # Primera GPU
         temperatura_gpu = pynvml.nvmlDeviceGetTemperature(handle, pynvml.NVML_TEMPERATURE_GPU)
         temperaturas["GPU"] = f"{temperatura_gpu} °C"
-    except pynvml.NVMLError:
-        pass
+    except pynvml.NVMLError as e:
+        temperaturas["GPU"] = f"Error al obtener temperaturas de la GPU: {str(e)}"
+    except Exception as e:
+        temperaturas["GPU"] = f"Error inesperado: {str(e)}"    
     finally:
         pynvml.nvmlShutdown()
 
     return temperaturas
 
 def obtener_info_gpu():
-    gpus = GPUtil.getGPUs()
-    if not gpus:
-        return {"GPU": "No disponible"}
-    
-    gpu = gpus[0]
-    return {
-        "Nombre": gpu.name,
-        "Carga (%)": gpu.load * 100,
-        "Memoria Usada (GB)": round(gpu.memoryUsed, 2),
-        "Memoria Total (GB)": round(gpu.memoryTotal, 2),
-        "Temperatura (°C)": gpu.temperature,
-    }
+    try:
+        gpus = GPUtil.getGPUs()
+        if not gpus:
+            return {"GPU": "No disponible"}
+        
+        gpu = gpus[0]
+        return {
+            "Nombre": gpu.name,
+            "Carga (%)": gpu.load * 100,
+            "Memoria Usada (GB)": round(gpu.memoryUsed, 2),
+            "Memoria Total (GB)": round(gpu.memoryTotal, 2),
+            "Temperatura (°C)": gpu.temperature,
+        }
+    except Exception as e:
+        return {"GPU": f"Error al obtener informacion de la GPU: {str(e)}"}
 
 def generar_prompt_personalizado(info_procesador, info_ram, info_disco, info_gpu, temperaturas):
     prompt = "He escaneado un sistema con las siguientes características:\n\n"
