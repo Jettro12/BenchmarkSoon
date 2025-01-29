@@ -1,7 +1,8 @@
 import psutil
 import platform
-from datetime import timedelta
-from configuraciones import Hardware, model
+import GPUtil
+from configuraciones import model
+import pynvml
 
 # Función para obtener información del procesador
 def obtener_info_procesador():
@@ -25,25 +26,7 @@ def obtener_info_ram():
         "Uso de RAM (%)": ram_info.percent,
     }
 
-def obtener_infoqram():
-    try:
-        import wmi
-        c = wmi.WMI()
-        ram_info = []
-        for mem in c.Win32_PhysicalMemory():
-            tipo_ram_codigo = str(mem.MemoryType)
-            tipo_ram = {
-                "20": "DDR", "21": "DDR2", "22": "DDR2 FB-DIMM",
-                "24": "DDR3", "26": "DDR4"
-            }.get(tipo_ram_codigo, "Desconocido")
-            ram_info.append({
-                "Tipo": tipo_ram,
-                "Velocidad (MHz)": mem.Speed,
-                "Capacidad (GB)": round(int(mem.Capacity) / (1024 ** 3), 2)
-            })
-        return ram_info
-    except Exception as e:
-        return [{"Error": f"No se pudo obtener información de la RAM: {e}"}]
+
 
 # Función para obtener información del disco
 def obtener_info_disco():
@@ -55,45 +38,39 @@ def obtener_info_disco():
         "Uso de Disco (%)": disco_info.percent,
     }
 
-# Función para obtener temperaturas del hardware
-def obtener_temperaturas_hardware():
-    try:
-        computer = Hardware.Computer()
-        computer.CPUEnabled = True
-        computer.Open()
-        temperaturas = {}
-        for hardware in computer.Hardware:
-            hardware.Update()
-            for sensor in hardware.Sensors:
-                if sensor.SensorType == Hardware.SensorType.Temperature:
-                    temperaturas[sensor.Name] = sensor.Value
-        return temperaturas
-    except Exception as e:
-        return {"Error": f"No se pudo obtener las temperaturas: {e}"}
+def obtener_temperaturas():
+    temperaturas = {"CPU": "No disponible", "GPU": "No disponible"}
 
-# Función para obtener información general del sistema
-def obtener_info_sistema():
-    ram_info = psutil.virtual_memory()
-    disco_info = psutil.disk_usage('/')
+    try:
+        pynvml.nvmlInit()
+        handle = pynvml.nvmlDeviceGetHandleByIndex(0)  # Primera GPU
+        temperatura_gpu = pynvml.nvmlDeviceGetTemperature(handle, pynvml.NVML_TEMPERATURE_GPU)
+        temperaturas["GPU"] = f"{temperatura_gpu} °C"
+    except pynvml.NVMLError:
+        pass
+    finally:
+        pynvml.nvmlShutdown()
+
+    return temperaturas
+
+def obtener_info_gpu():
+    gpus = GPUtil.getGPUs()
+    if not gpus:
+        return {"GPU": "No disponible"}
+    
+    gpu = gpus[0]
     return {
-        "Sistema Operativo": platform.system() + " " + platform.release(),
-        "Arquitectura": platform.architecture()[0],
-        "RAM Total (GB)": round(ram_info.total / (1024 ** 3), 2),
-        "RAM Usada (GB)": round(ram_info.used / (1024 ** 3), 2),
-        "RAM Libre (GB)": round(ram_info.available / (1024 ** 3), 2),
-        "Disco Total (GB)": round(disco_info.total / (1024 ** 3), 2),
-        "Disco Usado (GB)": round(disco_info.used / (1024 ** 3), 2),
-        "Disco Libre (GB)": round(disco_info.free / (1024 ** 3), 2),
-        "Disco Usado (%)": round(disco_info.percent, 2),
-        "Tiempo de Uso del Sistema": str(timedelta(seconds=psutil.boot_time())),
+        "Nombre": gpu.name,
+        "Carga (%)": gpu.load * 100,
+        "Memoria Usada (GB)": round(gpu.memoryUsed, 2),
+        "Memoria Total (GB)": round(gpu.memoryTotal, 2),
+        "Temperatura (°C)": gpu.temperature,
     }
 
-# Función para generar el prompt personalizado
-def generar_prompt_personalizado():
-    info_procesador = obtener_info_procesador()
-    info_ram = obtener_info_ram()
-    info_disco = obtener_info_disco()
 
+# Función para generar el prompt personalizado
+def generar_prompt_personalizado(info_procesador, info_ram, info_disco, info_gpu, temperaturas):
+    
     prompt = "He escaneado un sistema con las siguientes características:\n\n"
     prompt += (
         f"- **Procesador**: {info_procesador['Nombre']}\n"
@@ -101,7 +78,8 @@ def generar_prompt_personalizado():
         f"  - Frecuencia Máxima: {info_procesador['Frecuencia Máxima (GHz)']} GHz\n"
         f"  - Frecuencia Actual: {info_procesador['Frecuencia Actual (GHz)']} GHz\n"
         f"  - Núcleos Físicos: {info_procesador['Núcleos Físicos']}\n"
-        f"  - Núcleos Lógicos: {info_procesador['Núcleos Lógicos']}\n\n"
+        f"  - Núcleos Lógicos: {info_procesador['Núcleos Lógicos']}\n"
+        f"  - Temperatura: {temperaturas['CPU']}\n\n"
     )
     prompt += (
         "- **Memoria RAM**:\n"
@@ -117,6 +95,17 @@ def generar_prompt_personalizado():
         f"  - Disco Libre: {info_disco['Disco Libre (GB)']} GB\n"
         f"  - Uso del Disco: {info_disco['Uso de Disco (%)']}%\n"
     )
+
+    # Información de la GPU
+    prompt += (
+        "- **GPU**:\n"
+        f"  - Nombre: {info_gpu['Nombre']}\n"
+        f"  - Carga: {info_gpu['Carga (%)']}%\n"
+        f"  - Memoria Usada: {info_gpu['Memoria Usada (GB)']} GB\n"
+        f"  - Memoria Total: {info_gpu['Memoria Total (GB)']} GB\n"
+        f"  - Temperatura: {info_gpu['Temperatura (°C)']} °C\n\n"
+    )
+    
     prompt += "\nPor favor, bríndame un consejo personalizado para optimizar este sistema.\n"
     return prompt
 
