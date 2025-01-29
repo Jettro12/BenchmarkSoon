@@ -73,8 +73,10 @@ def obtener_info_gpu():
             "Memoria Total (GB)": round(gpu.memoryTotal, 2),
             "Temperatura (°C)": gpu.temperature,
         }
-    except Exception as e:
+    except pynvml.NVMLError as e:
         return {"GPU": f"Error al obtener informacion de la GPU: {str(e)}"}
+    except Exception as e:
+        return {"GPU": "No disponible"}
 
 def generar_prompt_personalizado(info_procesador, info_ram, info_disco, info_gpu, temperaturas):
     prompt = "He escaneado un sistema con las siguientes características:\n\n"
@@ -104,14 +106,17 @@ def generar_prompt_personalizado(info_procesador, info_ram, info_disco, info_gpu
     prompt += "\nPor favor, bríndame un consejo personalizado para optimizar este sistema.\n"
     
     # Información de la GPU
-    prompt += (
-        "- **GPU**:\n"
-        f"  - Nombre: {info_gpu['Nombre']}\n"
-        f"  - Carga: {info_gpu['Carga (%)']}%\n"
-        f"  - Memoria Usada: {info_gpu['Memoria Usada (GB)']} GB\n"
-        f"  - Memoria Total: {info_gpu['Memoria Total (GB)']} GB\n"
-        f"  - Temperatura: {info_gpu['Temperatura (°C)']} °C\n\n"
-    )
+    if "No disponible" in info_gpu.values():
+        prompt += "- **GPU**: No se detecto GPU en este sistema.\n\n"
+    else:
+        prompt += (
+            "- **GPU**:\n"
+            f"  - Nombre: {info_gpu['Nombre']}\n"
+            f"  - Carga: {info_gpu['Carga (%)']}%\n"
+            f"  - Memoria Usada: {info_gpu['Memoria Usada (GB)']} GB\n"
+            f"  - Memoria Total: {info_gpu['Memoria Total (GB)']} GB\n"
+            f"  - Temperatura: {info_gpu['Temperatura (°C)']} °C\n\n"
+        )
     
     return prompt
 

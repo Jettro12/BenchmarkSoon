@@ -127,7 +127,16 @@ class VentanaPrincipal:
             )
 
             # Configuración para el frame de la GPU
-            self.mostrar_categoria(
+            if "No disponible" in self.info_gpu.values():
+                self.mostrar_categoria(
+                    categoria="GPU",
+                    datos={"GPU": "No se detecto ninguna GPU en este sistema"},
+                    posicion=(190, 525),
+                    ancho=470,
+                    alto=130,
+                )
+            else:
+                self.mostrar_categoria(
                 categoria="GPU",
                 datos=self.info_gpu,
                 posicion=(190, 525),
