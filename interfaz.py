@@ -8,7 +8,6 @@ from funciones import (
     generar_prompt_personalizado,
     obtener_consejo_ia,
     obtener_info_gpu,
-    obtener_temperaturas,
 )
 from tkinter.messagebox import showerror
 from tkinter import BOTH, X, Y, END, VERTICAL, RIGHT, LEFT, BOTTOM
@@ -85,7 +84,6 @@ class VentanaPrincipal:
             self.info_ram = obtener_info_ram()
             self.info_disco = obtener_info_disco()
             self.info_gpu = obtener_info_gpu()
-            self.temperaturas = obtener_temperaturas()
 
             fondo = Image.open("BenchmarkSoon/Media/modelo2.jpg").resize((576, 768), Image.LANCZOS)
             fondo_tk = ImageTk.PhotoImage(fondo)
@@ -112,7 +110,7 @@ class VentanaPrincipal:
             self.mostrar_categoria(
                 categoria="RAM",
                 datos=self.info_ram,
-                posicion=(1000, 219),
+                posicion=(900, 180),
                 ancho=200,
                 alto=130,
             )
@@ -141,16 +139,7 @@ class VentanaPrincipal:
                 datos=self.info_gpu,
                 posicion=(190, 525),
                 ancho=470,
-                alto=130,
-            )
-
-            # Configuración para el frame de la Temperatura
-            self.mostrar_categoria(
-                categoria="Temperatura",
-                datos=self.temperaturas,
-                posicion=(1000, 5),
-                ancho=200,
-                alto=130,
+                alto=150,
             )
             
             boton_consejo = tb.Button(
@@ -207,7 +196,6 @@ class VentanaPrincipal:
                 self.info_ram, 
                 self.info_disco,
                 self.info_gpu,
-                self.temperaturas,
                 )
             consejo = obtener_consejo_ia(prompt)
 
@@ -313,7 +301,7 @@ class VentanaPrincipal:
         if opcion == "Otro":
             if prompt_usuario:
                 # Combinar el prompt inicial con el prompt del usuario
-                prompt_combinado = f"{generar_prompt_personalizado(self.info_procesador, self.info_ram, self.info_disco, self.info_gpu, self.temperaturas)}\n\n{prompt_usuario}"
+                prompt_combinado = f"{generar_prompt_personalizado(self.info_procesador, self.info_ram, self.info_disco, self.info_gpu)}\n\n{prompt_usuario}"
                 self.generar_sugerencias(prompt_combinado)  # Llamar a la función para generar sugerencias
             else:
                 showerror("Advertencia", "Por favor, ingresa un prompt personalizado.")

@@ -2,7 +2,6 @@ import psutil
 import platform
 from configuraciones import model
 import GPUtil
-import pynvml
 
 def obtener_info_procesador():
     try:
@@ -42,23 +41,6 @@ def obtener_info_disco():
     except Exception as e:
         return {"Error": f"Error al obtener informacion del disco: {str(e)}"}
 
-def obtener_temperaturas():
-    temperaturas = {"CPU": "No disponible", "GPU": "No disponible"}
-
-    try:
-        pynvml.nvmlInit()
-        handle = pynvml.nvmlDeviceGetHandleByIndex(0)  # Primera GPU
-        temperatura_gpu = pynvml.nvmlDeviceGetTemperature(handle, pynvml.NVML_TEMPERATURE_GPU)
-        temperaturas["GPU"] = f"{temperatura_gpu} °C"
-    except pynvml.NVMLError as e:
-        temperaturas["GPU"] = f"Error al obtener temperaturas de la GPU: {str(e)}"
-    except Exception as e:
-        temperaturas["GPU"] = f"Error inesperado: {str(e)}"    
-    finally:
-        pynvml.nvmlShutdown()
-
-    return temperaturas
-
 def obtener_info_gpu():
     try:
         gpus = GPUtil.getGPUs()
@@ -73,12 +55,10 @@ def obtener_info_gpu():
             "Memoria Total (GB)": round(gpu.memoryTotal, 2),
             "Temperatura (°C)": gpu.temperature,
         }
-    except pynvml.NVMLError as e:
-        return {"GPU": f"Error al obtener informacion de la GPU: {str(e)}"}
     except Exception as e:
         return {"GPU": "No disponible"}
 
-def generar_prompt_personalizado(info_procesador, info_ram, info_disco, info_gpu, temperaturas):
+def generar_prompt_personalizado(info_procesador, info_ram, info_disco, info_gpu):
     prompt = "He escaneado un sistema con las siguientes características:\n\n"
     prompt += (
         f"- **Procesador**: {info_procesador['Nombre']}\n"
@@ -87,7 +67,6 @@ def generar_prompt_personalizado(info_procesador, info_ram, info_disco, info_gpu
         f"  - Frecuencia Actual: {info_procesador['Frecuencia Actual (GHz)']} GHz\n"
         f"  - Núcleos Físicos: {info_procesador['Núcleos Físicos']}\n"
         f"  - Núcleos Lógicos: {info_procesador['Núcleos Lógicos']}\n\n"
-        f"  - Temperatura: {temperaturas['CPU']}\n\n"
     )
     prompt += (
         "- **Memoria RAM**:\n"
@@ -126,3 +105,4 @@ def obtener_consejo_ia(prompt):
         return response.text
     except Exception as e:
         return f"Error al generar el consejo: {e}"
+    
