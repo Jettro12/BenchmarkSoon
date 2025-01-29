@@ -1,22 +1,46 @@
 import ttkbootstrap as tb
-from ttkbootstrap.constants import *
 from PIL import Image, ImageTk
 from funciones import (
     obtener_info_procesador,
     obtener_info_ram,
     obtener_info_disco,
+    obtener_info_gpu,
+    obtener_temperaturas,
     generar_prompt_personalizado,
     obtener_consejo_ia,
 )
+from tkinter.messagebox import showerror, showinfo
+from tkinter import BOTH, X, Y, END, VERTICAL, RIGHT, LEFT, BOTTOM
+from configuraciones import (
+    ESTILO_BOTON_PRIMARIO,
+    ESTILO_BOTON_SECUNDARIO,
+    ESTILO_LABEL_TITULO,
+    ESTILO_LABEL_TEXTO,
+    ESTILO_TEXTO_CONSEJO,
+    ESTILO_LABEL_CATEGORIA,
+)
+from funciones_graficos import (
+    crear_grafico_cpu,
+    crear_grafico_ram,
+    crear_grafico_disco,
+    crear_grafico_gpu,
+    crear_grafico_temperaturas
+)
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 class VentanaPrincipal:
     def __init__(self, root):
         self.root = root
         self.root.title("Benchmark del Sistema")
-
         # Configuración inicial con ttkbootstrap
-        self.style = tb.Style("superhero")  # Cambia el tema aquí según tus preferencias
-        self.root.geometry("1200x800")
+        self.style = tb.Style("vapor")  # Cambia el tema aquí según tus preferencias
+        pantalla_ancho = self.root.winfo_screenwidth()
+        pantalla_alto = self.root.winfo_screenheight()
+        self.root.geometry(f"{pantalla_ancho}x{pantalla_alto}")
+
+        # Configurar estilos personalizados
+        self.style.configure("Primary.TButton", **ESTILO_BOTON_PRIMARIO)
+        self.style.configure("Secondary.TButton", **ESTILO_BOTON_SECUNDARIO)
 
         # Crear un marco contenedor
         self.contenedor = tb.Frame(self.root)
@@ -36,23 +60,27 @@ class VentanaPrincipal:
 
         # Fondo de imagen
         try:
-            fondo = Image.open("Media/Atenea.jpg")
-            fondo = fondo.resize((800, 600), Image.LANCZOS)
+            fondo = Image.open("Media/modelo1.png").resize((576, 768), Image.LANCZOS)
             fondo_tk = ImageTk.PhotoImage(fondo)
+
+            self.root.update()
+            ventana_ancho = self.root.winfo_width()
+            ventana_alto = self.root.winfo_height()
+            fondo_x = (ventana_ancho - 576) // 2
+            fondo_y = (ventana_alto - 768) // 2
+
+            label_fondo = tb.Label(self.contenedor, image=fondo_tk)
+            label_fondo.image = fondo_tk
+            label_fondo.place(x=fondo_x, y=fondo_y, width=576, height=768)
         except Exception as e:
             tb.Messagebox.show_error(title="Error", message=f"No se pudo cargar la imagen de fondo: {e}")
             return
-
-        label_fondo = tb.Label(self.contenedor, image=fondo_tk)
-        label_fondo.image = fondo_tk
-        label_fondo.place(relwidth=1, relheight=1)
 
         # Título
         label_titulo = tb.Label(
             self.contenedor,
             text="Bienvenido al Benchmark del Sistema",
-            font=("Helvetica", 26, "bold"),
-            bootstyle="primary",
+            **ESTILO_LABEL_TITULO,
         )
         label_titulo.pack(pady=20)
 
@@ -60,7 +88,7 @@ class VentanaPrincipal:
         boton_analizar = tb.Button(
             self.contenedor,
             text="Analizar",
-            bootstyle="success",
+            style="Primary.TButton",
             command=self.ventana_analisis,
         )
         boton_analizar.place(relx=0.5, rely=0.8, anchor="center")
@@ -69,100 +97,236 @@ class VentanaPrincipal:
         """Muestra la pantalla de análisis del sistema."""
         self.limpiar_contenedor()
 
-        # Crear un frame con scroll
-        frame_scroll = tb.Frame(self.contenedor)
-        frame_scroll.pack(fill=BOTH, expand=True)
+        try:
+            self.info_procesador = obtener_info_procesador()
+            self.info_ram = obtener_info_ram()
+            self.info_disco = obtener_info_disco()
+            self.info_gpu = obtener_info_gpu()
+            self.temperaturas = obtener_temperaturas()
+           
+            fondo = Image.open("Media/modelo2.png").resize((576, 768), Image.LANCZOS)
+            fondo_tk = ImageTk.PhotoImage(fondo)
 
-        canvas = tb.Canvas(frame_scroll)
-        canvas.pack(side=LEFT, fill=BOTH, expand=True)
+            ventana_ancho = self.root.winfo_width()
+            ventana_alto = self.root.winfo_height()
+            fondo_x = (ventana_ancho - 576) // 2
+            fondo_y = (ventana_alto - 768) // 2
 
-        scrollbar = tb.Scrollbar(frame_scroll, orient=VERTICAL, command=canvas.yview)
-        scrollbar.pack(side=RIGHT, fill=Y)
+            label_fondo = tb.Label(self.contenedor, image=fondo_tk)
+            label_fondo.image = fondo_tk
+            label_fondo.place(x=fondo_x, y=fondo_y, width=576, height=768)
 
-        canvas.configure(yscrollcommand=scrollbar.set)
+            # Mostrar gráficos y datos
+            fig1 = crear_grafico_cpu(self.info_procesador)
+            self.mostrar_categoria(
+                categoria="Frecuencias CPU",
+                datos=self.info_procesador,
+                grafico=fig1,
+                posicion=(30, 15),
+                ancho=470,
+                alto=370,
+            )
 
-        frame_contenido = tb.Frame(canvas)
-        canvas.create_window((0, 0), window=frame_contenido, anchor="nw")
+            # Configuración para el frame de la RAM
+            fig3 = crear_grafico_ram(self.info_ram)
+            self.mostrar_categoria(
+                categoria="RAM",
+                datos=self.info_ram,
+                grafico=fig3,
+                posicion=(1050, 15),
+                ancho=200,
+                alto=280,
+            )
 
-        frame_contenido.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+            # Configuración para el frame del Disco
+            fig4 = crear_grafico_disco(self.info_disco)
+            self.mostrar_categoria(
+                categoria="Disco",
+                datos=self.info_disco,
+                grafico=fig4,
+                posicion=(1050, 405),
+                ancho=210,
+                alto=280,
+            )
 
-        # Secciones de análisis y consejo
-        frame_analisis = tb.Frame(frame_contenido)
-        frame_analisis.pack(side=LEFT, fill=BOTH, expand=True, padx=10, pady=10)
+            # Configuración para el frame de la GPU
+            fig5 = crear_grafico_gpu(self.info_gpu)
+            self.mostrar_categoria(
+                categoria="GPU",
+                datos=self.info_gpu,
+                grafico=fig5,
+                posicion=(35, 405),
+                ancho=450,
+                alto=280,
+            )
 
-        frame_consejo = tb.Frame(frame_contenido)
-        frame_consejo.pack(side=RIGHT, fill=BOTH, expand=True, padx=10, pady=10)
+            # Configuración para el frame de la Temperatura
+            fig6 = crear_grafico_temperaturas(self.temperaturas)
+            self.mostrar_categoria(
+                categoria="Temperatura",
+                datos=self.temperaturas,
+                grafico=fig6,
+                posicion=(1270, 265),
+                ancho=200,
+                alto=230,
+            )
+            # Aplicar estilo al botón de análisis
+            boton_consejo = tb.Button(
+                self.contenedor,
+                text="Dame un consejo Atenea",
+                command=self.ventana_consejo,
+                style="Primary.TButton",
+            )
+            boton_consejo.place(relx=0.5, rely=0.8, anchor="center")
+        except Exception as e:
+            showerror("Error", f"No se pudo completar el análisis: {e}")
 
-        # Título
-        label_titulo = tb.Label(frame_analisis, text="Resultados del Análisis", font=("Arial", 16), bootstyle="info")
-        label_titulo.pack(pady=10)
+    def mostrar_categoria(self, categoria, datos, grafico, posicion, ancho, alto):
+        """Muestra una categoría con su frame y labels correspondientes."""
+        x, y = posicion
 
-        # Obtener información del sistema
-        self.info_procesador = obtener_info_procesador()
-        self.info_ram = obtener_info_ram()
-        self.info_disco = obtener_info_disco()
-
-        for categoria, datos in {
-            "Procesador": self.info_procesador,
-            "RAM": self.info_ram,
-            "Disco": self.info_disco,
-        }.items():
-            frame_categoria = tb.Labelframe(frame_analisis, text=categoria, padding=10, bootstyle="secondary")
-            frame_categoria.pack(fill=X, padx=10, pady=5)
-            for clave, valor in datos.items():
-                label = tb.Label(frame_categoria, text=f"{clave}: {valor}")
-                label.pack(anchor="w")
-
-        # Generar el prompt basado en el análisis
-        self.prompt_inicial = generar_prompt_personalizado()
-
-        # Área para mostrar el consejo
-        label_consejo = tb.Label(frame_consejo, text="Consejo de Optimización:", font=("Arial", 14))
-        label_consejo.pack(pady=10)
-
-        self.texto_consejo = tb.Text(frame_consejo, wrap="word", height=15, width=40)
-        self.texto_consejo.pack(pady=10)
-
-        boton_consejo = tb.Button(
-            frame_consejo, text="Generar Consejo", bootstyle="primary", command=self.generar_consejo
+        # Crear el frame para la catesgoría
+        frame_categoria = tb.Labelframe(
+            self.contenedor,
+            text=categoria,
+            padding=10,
+            bootstyle="secondary",
         )
-        boton_consejo.pack(pady=10)
+        frame_categoria.place(x=x, y=y, width=ancho, height=alto)
 
-        # Chatbot
-        self.chatbot_seccion(frame_consejo)
+        # Mostrar los datos dentro del frame
+        for clave, valor in datos.items():
+            label = tb.Label(
+                frame_categoria,
+                text=f"{clave}: {valor}",
+                **ESTILO_LABEL_TEXTO,
+            )
+            label.pack(anchor="w")
 
+        # Mostrar gráfico
+        canvas = FigureCanvasTkAgg(grafico, master=frame_categoria)
+        canvas_widget = canvas.get_tk_widget()
+        canvas_widget.pack()
+        canvas.draw()
+
+    def ventana_consejo(self):
+        self.limpiar_contenedor()
+
+        # Frame principal para dividir la ventana en dos partes
+        frame_principal = tb.Frame(self.contenedor)
+        frame_principal.pack(fill=BOTH, expand=True, padx=10, pady=10)
+
+        # Frame para el lado izquierdo (consejo)
+        frame_izquierdo = tb.Frame(frame_principal)
+        frame_izquierdo.pack(side=LEFT, fill=BOTH, expand=True, padx=10, pady=10)
+
+        # Frame para el lado derecho (chatbot)
+        frame_derecho = tb.Frame(frame_principal)
+        frame_derecho.pack(side=RIGHT, fill=BOTH, expand=True, padx=10, pady=10)
+
+        try:
+            # Generar el prompt y obtener el consejo
+            prompt = generar_prompt_personalizado(
+                self.info_procesador,
+                self.info_ram,
+                self.info_disco,
+                self.info_gpu,
+                self.temperaturas,
+                
+            )
+            consejo = obtener_consejo_ia(prompt)
+
+            # Crear un Canvas para el scroll en el lado izquierdo
+            canvas = tb.Canvas(frame_izquierdo)
+            canvas.pack(side=LEFT, fill=BOTH, expand=True)
+
+            # Barra de desplazamiento
+            scrollbar = tb.Scrollbar(frame_izquierdo, orient=VERTICAL, command=canvas.yview)
+            scrollbar.pack(side=RIGHT, fill=Y)
+
+            canvas.configure(yscrollcommand=scrollbar.set)
+            canvas.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+
+            # Frame interno para el contenido del consejo
+            frame_consejo = tb.Frame(canvas)
+            canvas.create_window((0, 0), window=frame_consejo, anchor="nw")
+
+            # Aplicar estilo al título del consejo
+            label_consejo = tb.Label(
+                frame_consejo,
+                text="Consejo de Optimización:",
+                **ESTILO_LABEL_TITULO,
+            )
+            label_consejo.pack(pady=10)
+
+            # Aplicar estilo al texto del consejo
+            texto_consejo = tb.Label(
+                frame_consejo,
+                text=consejo,
+                **ESTILO_TEXTO_CONSEJO,
+            )
+            texto_consejo.pack(pady=10)
+
+        except Exception as e:
+            showerror("Error", f"Error al obtener consejo de IA: {e}")
+
+        # Frame para el chatbot en el lado derecho
+        self.chatbot_seccion(frame_derecho)
+
+        # Frame para los botones de volver y salir en la parte inferior
+        frame_botones = tb.Frame(self.contenedor)
+        frame_botones.pack(fill=X, padx=10, pady=10)
+
+        # Aplicar estilo secundario al botón "Volver al inicio"
         boton_volver = tb.Button(
-            self.contenedor, text="Volver al inicio", bootstyle="danger", command=self.ventana_inicio
+            frame_botones,
+            text="Volver al inicio",
+            command=self.ventana_inicio,
+            style="Secondary.TButton",
         )
-        boton_volver.pack(pady=10)
+        boton_volver.pack(side=LEFT, padx=5)
 
-    def chatbot_seccion(self, frame_consejo):
+        # Aplicar estilo secundario al botón "Salir"
+        boton_salir = tb.Button(
+            frame_botones,
+            text="Salir",
+            command=self.root.quit,
+            style="Secondary.TButton",
+        )
+        boton_salir.pack(side=RIGHT, padx=5)
+
+    def chatbot_seccion(self, frame_chatbot):
         """Agrega la sección de chatbot a la ventana."""
-        frame_chatbot = tb.Labelframe(frame_consejo, text="Chatbot de Optimización", padding=10)
-        frame_chatbot.pack(fill=X, padx=10, pady=20)
+        frame_chat = tb.Labelframe(frame_chatbot, text="Chatbot de Optimización", padding=10, bootstyle="secondary")
+        frame_chat.pack(fill=BOTH, expand=True, padx=10, pady=10)
 
-        label_pregunta = tb.Label(frame_chatbot, text="¿Necesitas algo en especial?", font=("Arial", 14))
+        # Pregunta inicial
+        label_pregunta = tb.Label(frame_chat, text="¿Necesitas algo en especial?", font=("Arial", 14))
         label_pregunta.pack(pady=5)
 
+        # Opciones predefinidas
         self.seleccion = tb.StringVar(value="Otro")
         opciones = ["Optimizar para jugar", "Optimizar para programar", "Otro"]
         for opcion in opciones:
             tb.Radiobutton(
-                frame_chatbot, text=opcion, variable=self.seleccion, value=opcion, bootstyle="success"
+                frame_chat, text=opcion, variable=self.seleccion, value=opcion
             ).pack(anchor="w")
 
-        label_prompt = tb.Label(frame_chatbot, text="O escribe un prompt personalizado:", font=("Arial", 12))
+        # Entrada para un prompt personalizado
+        label_prompt = tb.Label(frame_chat, text="O escribe un prompt personalizado:", font=("Arial", 12))
         label_prompt.pack(pady=5)
 
-        self.entry_prompt = tb.Entry(frame_chatbot, width=50)
+        self.entry_prompt = tb.Entry(frame_chat, width=50)
         self.entry_prompt.pack(pady=5)
 
+        # Botón para obtener sugerencias
         boton_obtener = tb.Button(
-            frame_chatbot, text="Obtener Sugerencias", bootstyle="info", command=self.obtener_sugerencias
+            frame_chat, text="Obtener Sugerencias", command=self.obtener_sugerencias
         )
         boton_obtener.pack(pady=10)
 
-        self.texto_respuesta = tb.Text(frame_chatbot, wrap="word", height=10, width=80, state="disabled")
+        # Área de salida para las sugerencias
+        self.texto_respuesta = tb.Text(frame_chat, wrap="word", height=10, width=80, state="disabled")
         self.texto_respuesta.pack(pady=10)
 
     def obtener_sugerencias(self):
@@ -171,30 +335,21 @@ class VentanaPrincipal:
 
         if opcion == "Otro":
             if prompt_usuario:
-                prompt_combinado = f"{self.prompt_inicial}\n\n{prompt_usuario}"
+                prompt_combinado = f"{generar_prompt_personalizado(self.info_procesador, self.info_ram, self.info_disco, self.info_gpu, self.temperaturas, self.procesos)}\n\n{prompt_usuario}"
                 self.generar_sugerencias(prompt_combinado)
             else:
-                tb.Messagebox.show_warning(title="Advertencia", message="Por favor, ingresa un prompt personalizado.")
+                showerror("Advertencia", "Por favor, ingresa un prompt personalizado.")
         else:
             sugerencias = f"Sugerencias para {opcion}: Mejora tu configuración para {opcion.lower()}."
             self.texto_respuesta.config(state="normal")
             self.texto_respuesta.delete(1.0, "end")
-            self.texto_respuesta.insert("end", sugerencias)
+            self.texto_respuesta.insert(END, sugerencias)
             self.texto_respuesta.config(state="disabled")
 
-    def generar_consejo(self):
-        consejo = obtener_consejo_ia(self.prompt_inicial)
-        self.texto_consejo.delete(1.0, "end")
-        self.texto_consejo.insert("end", consejo)
-
     def generar_sugerencias(self, prompt_usuario):
+        """Genera sugerencias personalizadas basadas en el prompt del usuario."""
         sugerencias = obtener_consejo_ia(prompt_usuario)
         self.texto_respuesta.config(state="normal")
-        self.texto_respuesta.delete(1.0, "end")
-        self.texto_respuesta.insert("end", sugerencias)
+        self.texto_respuesta.delete(1.0, END)
+        self.texto_respuesta.insert(END, sugerencias)
         self.texto_respuesta.config(state="disabled")
-
-if __name__ == "__main__":
-    root = tb.Window()
-    app = VentanaPrincipal(root)
-    root.mainloop()
