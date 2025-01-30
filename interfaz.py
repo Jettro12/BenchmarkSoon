@@ -51,7 +51,7 @@ class VentanaPrincipal:
         self.limpiar_contenedor()
 
         try:
-            fondo = Image.open("BenchmarkSoon/Media/modelo1.png").resize((576, 768), Image.LANCZOS)
+            fondo = Image.open("Media/modelo1.png").resize((576, 768), Image.LANCZOS)
             fondo_tk = ImageTk.PhotoImage(fondo)
 
             self.root.update()
@@ -94,7 +94,7 @@ class VentanaPrincipal:
             self.info_disco = obtener_info_disco()
             self.info_gpu = obtener_info_gpu()
 
-            fondo = Image.open("BenchmarkSoon/Media/modelo2.png").resize((576, 768), Image.LANCZOS)
+            fondo = Image.open("Media/modelo2.png").resize((576, 768), Image.LANCZOS)
             fondo_tk = ImageTk.PhotoImage(fondo)
 
             ventana_ancho = self.root.winfo_width()
@@ -171,7 +171,7 @@ class VentanaPrincipal:
         except Exception as e:
             showerror("Error", f"No se pudo completar el análisis: {e}")
 
-    def mostrar_categoria(self, categoria, datos, posicion, ancho, alto):
+    def mostrar_categoria(self, categoria, datos,grafico, posicion, ancho, alto):
         """Muestra una categoría con su frame y labels correspondientes."""
         x, y = posicion
 
@@ -192,6 +192,12 @@ class VentanaPrincipal:
                 **ESTILO_LABEL_TEXTO,
             )
             label.pack(anchor="w")
+        
+        # Mostrar gráfico
+        canvas = FigureCanvasTkAgg(grafico, master=frame_categoria)
+        canvas_widget = canvas.get_tk_widget()
+        canvas_widget.pack()
+        canvas.draw()
 
     def ventana_consejo(self):
         self.limpiar_contenedor()
