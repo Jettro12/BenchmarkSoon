@@ -8,6 +8,11 @@ from funciones import (
     generar_prompt_personalizado,
     obtener_consejo_ia,
     obtener_info_gpu,
+    almacenar_datos,
+    predecir_y_graficar,
+    preparar_datos_historicos,
+    entrenar_modelo,
+    crear_base_de_datos,
 )
 from tkinter.messagebox import showerror
 from tkinter import BOTH, X, Y, END, VERTICAL, RIGHT, LEFT, BOTTOM
@@ -29,6 +34,9 @@ class VentanaPrincipal:
         pantalla_alto = self.root.winfo_screenheight()
         self.root.geometry(f"{pantalla_ancho}x{pantalla_alto}")
 
+        # Crear las tablas si no existen
+        crear_base_de_datos()
+
         self.contenedor = tb.Frame(self.root)
         self.contenedor.pack(fill=BOTH, expand=True)
 
@@ -42,7 +50,7 @@ class VentanaPrincipal:
         self.limpiar_contenedor()
 
         try:
-            fondo = Image.open("BenchmarkSoon/Media/modelo1.jpg").resize((576, 768), Image.LANCZOS)
+            fondo = Image.open("Media/modelo1.png").resize((576, 768), Image.LANCZOS)
             fondo_tk = ImageTk.PhotoImage(fondo)
 
             self.root.update()
@@ -59,7 +67,6 @@ class VentanaPrincipal:
             showerror("Error", f"No se pudo cargar la imagen de fondo: {e}")
             return
 
-        
         label_titulo = tb.Label(
             self.contenedor,
             text="Bienvenido al Benchmark del Sistema",
@@ -67,7 +74,6 @@ class VentanaPrincipal:
         )
         label_titulo.pack(pady=20)
 
-        
         boton_analizar = tb.Button(
             self.contenedor,
             text="Analizar",
@@ -84,8 +90,10 @@ class VentanaPrincipal:
             self.info_ram = obtener_info_ram()
             self.info_disco = obtener_info_disco()
             self.info_gpu = obtener_info_gpu()
+            # Almacenar los datos en la base de datos
+            almacenar_datos(self.info_procesador, self.info_ram, self.info_disco, self.info_gpu)
 
-            fondo = Image.open("BenchmarkSoon/Media/modelo2.jpg").resize((576, 768), Image.LANCZOS)
+            fondo = Image.open("Media/modelo2.png").resize((576, 768), Image.LANCZOS)
             fondo_tk = ImageTk.PhotoImage(fondo)
 
             ventana_ancho = self.root.winfo_width()
@@ -135,13 +143,13 @@ class VentanaPrincipal:
                 )
             else:
                 self.mostrar_categoria(
-                categoria="GPU",
-                datos=self.info_gpu,
-                posicion=(190, 525),
-                ancho=470,
-                alto=150,
-            )
-            
+                    categoria="GPU",
+                    datos=self.info_gpu,
+                    posicion=(190, 525),
+                    ancho=470,
+                    alto=150,
+                )
+
             boton_consejo = tb.Button(
                 self.contenedor,
                 text="Dame un consejo Atenea",
@@ -182,7 +190,7 @@ class VentanaPrincipal:
         frame_principal = tb.Frame(self.contenedor)
         frame_principal.pack(fill=BOTH, expand=True, padx=10, pady=10)
 
-        # Frame para el lado izquierdo (consejo)
+        # Frame para el lado izquierdo (consejo y predicciones)
         frame_izquierdo = tb.Frame(frame_principal)
         frame_izquierdo.pack(side=LEFT, fill=BOTH, expand=True, padx=10, pady=10)
 
@@ -191,15 +199,16 @@ class VentanaPrincipal:
         frame_derecho.pack(side=RIGHT, fill=BOTH, expand=True, padx=10, pady=10)
 
         try:
+            # Generar el consejo de optimización
             prompt = generar_prompt_personalizado(
-                self.info_procesador, 
-                self.info_ram, 
+                self.info_procesador,
+                self.info_ram,
                 self.info_disco,
                 self.info_gpu,
-                )
+            )
             consejo = obtener_consejo_ia(prompt)
 
-            # Crear un Canvas para el scroll
+            # Crear un Canvas para el scroll (para el consejo)
             canvas = tb.Canvas(frame_izquierdo)
             canvas.pack(side=LEFT, fill=BOTH, expand=True)
 
@@ -210,11 +219,11 @@ class VentanaPrincipal:
             canvas.configure(yscrollcommand=scrollbar.set)
             canvas.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
 
-            # Frame interno para el contenido
+            # Frame interno para el contenido del consejo
             frame_consejo = tb.Frame(canvas)
             canvas.create_window((0, 0), window=frame_consejo, anchor="nw")
 
-            
+            # Mostrar el título del consejo
             label_consejo = tb.Label(
                 frame_consejo,
                 text="Consejo de Optimización:",
@@ -222,13 +231,26 @@ class VentanaPrincipal:
             )
             label_consejo.pack(pady=10)
 
-            
+            # Mostrar el texto del consejo
             texto_consejo = tb.Label(
                 frame_consejo,
                 text=consejo,
                 **ESTILO_TEXTO_CONSEJO,  # Aplicar estilo de texto de consejo
             )
             texto_consejo.pack(pady=10)
+
+            # Botón para mostrar predicciones
+            boton_predicciones = tb.Button(
+                frame_consejo,
+                text="Mostrar Predicciones de Rendimiento",
+                command=self.mostrar_predicciones,
+                style="Primary.TButton",
+            )
+            boton_predicciones.pack(pady=10)
+
+            # Área de texto para la interpretación de las predicciones
+            self.texto_interpretacion = tb.Text(frame_consejo, wrap="word", height=5, width=50, state="disabled")
+            self.texto_interpretacion.pack(pady=10)
 
         except Exception as e:
             showerror("Error", f"Error al obtener consejo de IA: {e}")
@@ -240,7 +262,7 @@ class VentanaPrincipal:
         frame_botones = tb.Frame(self.contenedor)
         frame_botones.pack(fill=X, padx=10, pady=10)
 
-        # Aplicar estilo secundario al botón "Volver al inicio"
+        # Botón "Volver al inicio"
         boton_volver = tb.Button(
             frame_botones,
             text="Volver al inicio",
@@ -249,7 +271,7 @@ class VentanaPrincipal:
         )
         boton_volver.pack(side=LEFT, padx=5)
 
-        # Aplicar estilo secundario al botón "Salir"
+        # Botón "Salir"
         boton_salir = tb.Button(
             frame_botones,
             text="Salir",
@@ -257,7 +279,6 @@ class VentanaPrincipal:
             style="Secondary.TButton",  # Aplicar estilo secundario
         )
         boton_salir.pack(side=RIGHT, padx=5)
-
 
     def chatbot_seccion(self, frame_chatbot):
         """Agrega la sección de chatbot a la ventana."""
@@ -320,3 +341,40 @@ class VentanaPrincipal:
         self.texto_respuesta.delete(1.0, END)
         self.texto_respuesta.insert(END, sugerencias)
         self.texto_respuesta.config(state="disabled")
+
+    def mostrar_predicciones(self):
+     try:
+        # Cargar y preparar datos históricos
+        df_ram, df_procesador, df_disco, df_gpu = preparar_datos_historicos()
+
+        # --- Predicciones para la RAM ---
+        modelo_ram, fecha_minima_ram = entrenar_modelo(df_ram, "uso_ram")
+        interpretacion_ram = predecir_y_graficar(modelo_ram, fecha_minima_ram, "uso_ram", "Uso de RAM")
+
+        # --- Predicciones para el Procesador ---
+        # Usamos la frecuencia actual como métrica para el procesador
+        modelo_procesador, fecha_minima_procesador = entrenar_modelo(df_procesador, "frecuencia_actual")
+        interpretacion_procesador = predecir_y_graficar(
+            modelo_procesador, fecha_minima_procesador, "frecuencia_actual", "Frecuencia del Procesador (GHz)"
+        )
+
+        # --- Predicciones para el Disco Duro ---
+        modelo_disco, fecha_minima_disco = entrenar_modelo(df_disco, "uso_disco")
+        interpretacion_disco = predecir_y_graficar(modelo_disco, fecha_minima_disco, "uso_disco", "Uso del Disco (%)")
+
+        # Combinar las interpretaciones
+        interpretacion_completa = (
+            "--- Predicciones de Rendimiento ---\n\n"
+            f"RAM:\n{interpretacion_ram}\n\n"
+            f"Procesador:\n{interpretacion_procesador}\n\n"
+            f"Disco Duro:\n{interpretacion_disco}"
+        )
+
+        # Mostrar la interpretación en el área de texto
+        self.texto_interpretacion.config(state="normal")
+        self.texto_interpretacion.delete(1.0, END)
+        self.texto_interpretacion.insert(END, interpretacion_completa)
+        self.texto_interpretacion.config(state="disabled")
+
+     except Exception as e:
+        showerror("Error", f"Error al generar predicciones: {e}")
