@@ -104,25 +104,3 @@ def crear_grafico_gpu(info):
 
     return fig
 
-def crear_grafico_temperaturas(info):
-    fig, ax = plt.subplots(figsize=(3, 1.8))  # Tamaño de la figura
-    labels = list(info.keys())
-    values = [int(temp.split()[0]) if temp != "No disponible" else 0 for temp in info.values()]
-    sns.barplot(x=labels, y=values, hue=labels, palette="coolwarm", ax=ax, dodge=False, legend=False)
-    ax.set_title("Temperaturas del Sistema", fontsize=9, color='white')  # Tamaño de la fuente ajustado y color blanco
-    ax.set_ylabel("°C", fontsize=7, color='white')  # Tamaño de la fuente ajustado y color blanco
-    ax.set_xlabel("", fontsize=7, color='white')  # Tamaño de la fuente ajustado y color blanco
-
-    # Ajustar el tamaño y color de las etiquetas del eje
-    ax.tick_params(axis='x', colors='white', labelsize=6)  # Tamaño ajustado y color blanco
-    ax.tick_params(axis='y', colors='white', labelsize=6)  # Tamaño ajustado y color blanco
-
-    # Cambiar el color de los bordes de los ejes a blanco
-    for spine in ax.spines.values():
-        spine.set_edgecolor('white')
-
-    # Eliminar el fondo blanco
-    fig.patch.set_alpha(0.0)
-    ax.patch.set_alpha(0.0)
-
-    return fig

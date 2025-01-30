@@ -61,3 +61,9 @@ ESTILO_LABEL_CATEGORIA = {
     "foreground": "#2E86C1",  # Color del texto (azul)
     "background": "white",  # Color de fondo
 }
+
+ESTILO_LABEL_PROMPTPERSONAL = {
+    "font": ("Helvetica", 18, "bold"),  # Fuente grande y en negrita
+    "foreground": "#2E86C1",  # Color del texto (azul)
+    #"background": "white",  # Color de fondo
+}
