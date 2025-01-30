@@ -18,7 +18,16 @@ from configuraciones import (
     ESTILO_LABEL_TEXTO,
     ESTILO_TEXTO_CONSEJO,
     ESTILO_LABEL_CATEGORIA,
+    ESTILO_LABEL_PROMPTPERSONAL
 )
+from funciones_graficos import (
+    crear_grafico_cpu,
+    crear_grafico_ram,
+    crear_grafico_disco,
+    crear_grafico_gpu,
+    
+)
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 class VentanaPrincipal:
     def __init__(self, root):
@@ -42,7 +51,7 @@ class VentanaPrincipal:
         self.limpiar_contenedor()
 
         try:
-            fondo = Image.open("BenchmarkSoon/Media/modelo1.jpg").resize((576, 768), Image.LANCZOS)
+            fondo = Image.open("BenchmarkSoon/Media/modelo1.png").resize((576, 768), Image.LANCZOS)
             fondo_tk = ImageTk.PhotoImage(fondo)
 
             self.root.update()
@@ -85,7 +94,7 @@ class VentanaPrincipal:
             self.info_disco = obtener_info_disco()
             self.info_gpu = obtener_info_gpu()
 
-            fondo = Image.open("BenchmarkSoon/Media/modelo2.jpg").resize((576, 768), Image.LANCZOS)
+            fondo = Image.open("BenchmarkSoon/Media/modelo2.png").resize((576, 768), Image.LANCZOS)
             fondo_tk = ImageTk.PhotoImage(fondo)
 
             ventana_ancho = self.root.winfo_width()
@@ -98,48 +107,57 @@ class VentanaPrincipal:
             label_fondo.place(x=fondo_x, y=fondo_y, width=576, height=768)
 
             # Configuración para el frame del Procesador
+            fig1 = crear_grafico_cpu(self.info_procesador)
             self.mostrar_categoria(
                 categoria="Procesador",
                 datos=self.info_procesador,
-                posicion=(190, 5),
+                grafico=fig1,
+                posicion=(30, 15),
                 ancho=470,
-                alto=170,
+                alto=370,
             )
 
             # Configuración para el frame de la RAM
+            fig3 = crear_grafico_ram(self.info_ram)
             self.mostrar_categoria(
                 categoria="RAM",
                 datos=self.info_ram,
-                posicion=(900, 180),
+                grafico=fig3,
+                posicion=(1100, 15),
                 ancho=200,
-                alto=130,
+                alto=280,
             )
 
             # Configuración para el frame del Disco
+            fig4 = crear_grafico_disco(self.info_disco)
             self.mostrar_categoria(
                 categoria="Disco",
                 datos=self.info_disco,
-                posicion=(999, 525),
+                grafico=fig4,
+                posicion=(1100, 405),
                 ancho=210,
-                alto=130,
+                alto=280,
             )
 
             # Configuración para el frame de la GPU
+            fig5 = crear_grafico_gpu(self.info_gpu)
             if "No disponible" in self.info_gpu.values():
                 self.mostrar_categoria(
                     categoria="GPU",
                     datos={"GPU": "No se detecto ninguna GPU en este sistema"},
-                    posicion=(190, 525),
+                    grafico=fig5,
+                    posicion=(30, 405),
                     ancho=470,
-                    alto=130,
+                    alto=280,
                 )
             else:
                 self.mostrar_categoria(
                 categoria="GPU",
                 datos=self.info_gpu,
-                posicion=(190, 525),
+                grafico=fig5,
+                posicion=(30, 405),
                 ancho=470,
-                alto=150,
+                alto=280,
             )
             
             boton_consejo = tb.Button(
@@ -265,7 +283,10 @@ class VentanaPrincipal:
         frame_chat.pack(fill=BOTH, expand=True, padx=10, pady=10)
 
         # Pregunta inicial
-        label_pregunta = tb.Label(frame_chat, text="¿Necesitas algo en especial?", font=("Arial", 14))
+        label_pregunta = tb.Label(
+            frame_chat, 
+            text="¿Necesitas algo en especial?", 
+            **ESTILO_LABEL_TITULO)
         label_pregunta.pack(pady=5)
 
         # Opciones predefinidas
@@ -273,14 +294,20 @@ class VentanaPrincipal:
         opciones = ["Optimizar para jugar", "Optimizar para programar", "Otro"]
         for opcion in opciones:
             tb.Radiobutton(
-                frame_chat, text=opcion, variable=self.seleccion, value=opcion
+                frame_chat, 
+                text=opcion, 
+                variable=self.seleccion, 
+                value=opcion
             ).pack(anchor="w")
 
         # Entrada para un prompt personalizado
-        label_prompt = tb.Label(frame_chat, text="O escribe un prompt personalizado:", font=("Arial", 12))
+        label_prompt = tb.Label(
+            frame_chat, 
+            text="O escribe un prompt personalizado:", 
+             **ESTILO_LABEL_PROMPTPERSONAL)
         label_prompt.pack(pady=5)
 
-        self.entry_prompt = tb.Entry(frame_chat, width=50)
+        self.entry_prompt = tb.Entry(frame_chat, width=95)
         self.entry_prompt.pack(pady=5)
 
         # Botón para obtener sugerencias
@@ -290,7 +317,7 @@ class VentanaPrincipal:
         boton_obtener.pack(pady=10)
 
         # Área de salida para las sugerencias
-        self.texto_respuesta = tb.Text(frame_chat, wrap="word", height=10, width=80, state="disabled")
+        self.texto_respuesta = tb.Text(frame_chat, wrap="word", height=20, width=95, state="disabled")
         self.texto_respuesta.pack(pady=10)
 
     def obtener_sugerencias(self):
@@ -300,18 +327,20 @@ class VentanaPrincipal:
 
         if opcion == "Otro":
             if prompt_usuario:
-                # Combinar el prompt inicial con el prompt del usuario
-                prompt_combinado = f"{generar_prompt_personalizado(self.info_procesador, self.info_ram, self.info_disco, self.info_gpu)}\n\n{prompt_usuario}"
-                self.generar_sugerencias(prompt_combinado)  # Llamar a la función para generar sugerencias
+                # Generar el prompt personalizado del usuario
+                prompt_combinado = generar_prompt_personalizado(self.info_procesador, self.info_ram, self.info_disco, self.info_gpu) + f"\n\n{prompt_usuario}"
+                self.generar_sugerencias(prompt_combinado)
             else:
                 showerror("Advertencia", "Por favor, ingresa un prompt personalizado.")
         else:
-            # Aquí puedes agregar la lógica para mostrar sugerencias específicas
-            sugerencias = f"Sugerencias para {opcion}: Mejora tu configuración para {opcion.lower()}."
-            self.texto_respuesta.config(state="normal")
-            self.texto_respuesta.delete(1.0, END)
-            self.texto_respuesta.insert(END, sugerencias)
-            self.texto_respuesta.config(state="disabled")
+            if opcion == "Optimizar para jugar":
+                prompt_jugar = generar_prompt_personalizado(self.info_procesador, self.info_ram, self.info_disco, self.info_gpu)
+                prompt_jugar += "\n\nDe acuerdo al analisis del sistema quiero suguerencias cortas, especificas y de mucho valor para optimizar la PC para jugar y que vaya con fluides."
+                self.generar_sugerencias(prompt_jugar)
+            elif opcion == "Optimizar para programar":
+                prompt_programar = generar_prompt_personalizado(self.info_procesador, self.info_ram, self.info_disco, self.info_gpu)
+                prompt_programar += "\n\nDe acuerdo al analisis del sistema quiero suguerencias cortas, especificas y de mucho valor para optimizar la PC para Programas y siguiere para tres tipos de lenguajes python Java C# para que obtenga lo recursos necesarios para programar ."
+                self.generar_sugerencias(prompt_programar)
 
     def generar_sugerencias(self, prompt_usuario):
         """Genera sugerencias personalizadas basadas en el prompt del usuario."""
