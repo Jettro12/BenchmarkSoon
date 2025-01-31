@@ -1,6 +1,13 @@
 # --- Clase de la Interfaz Gráfica ---
 import ttkbootstrap as tb
+import tkinter as tk
 from PIL import Image, ImageTk
+from tkinter.scrolledtext import ScrolledText
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from tkinter import ttk,  messagebox
+import pandas as pd
+
 from funciones import (
     obtener_info_procesador,
     obtener_info_ram,
@@ -8,8 +15,12 @@ from funciones import (
     generar_prompt_personalizado,
     obtener_consejo_ia,
     obtener_info_gpu,
+   
+)
+from BD import (
+
     almacenar_datos,
-    predecir_y_graficar,
+    crear_grafico_barras,
     preparar_datos_historicos,
     entrenar_modelo,
     crear_base_de_datos,
@@ -69,7 +80,7 @@ class VentanaPrincipal:
 
         label_titulo = tb.Label(
             self.contenedor,
-            text="Bienvenido al Benchmark del Sistema",
+            text="B/Athen-IA",
             **ESTILO_LABEL_TITULO,  # Aplicar estilo de título
         )
         label_titulo.pack(pady=20)
@@ -80,7 +91,22 @@ class VentanaPrincipal:
             command=self.ventana_analisis,
             style="Primary.TButton",  # Aplicar estilo primario
         )
+        boton_venanalizar = tb.Button(
+            self.contenedor,
+            text="Analisis",
+            command=self.ventana_inicio,
+            style="Primary.TButton",  # Aplicar estilo primario
+        )
+        boton_Prediccion = tb.Button(
+            self.contenedor,
+            text="Predicciones",
+            command=self.mostrar_predicciones,
+            style="Primary.TButton",  # Aplicar estilo primario
+        )
         boton_analizar.place(relx=0.5, rely=0.8, anchor="center")
+        boton_venanalizar.place(relx=0.0, rely=0.2, anchor="w") 
+        boton_Prediccion.place(relx=0.0, rely=0.4, anchor="w") 
+
 
     def ventana_analisis(self):
         self.limpiar_contenedor()
@@ -239,18 +265,7 @@ class VentanaPrincipal:
             )
             texto_consejo.pack(pady=10)
 
-            # Botón para mostrar predicciones
-            boton_predicciones = tb.Button(
-                frame_consejo,
-                text="Mostrar Predicciones de Rendimiento",
-                command=self.mostrar_predicciones,
-                style="Primary.TButton",
-            )
-            boton_predicciones.pack(pady=10)
-
-            # Área de texto para la interpretación de las predicciones
-            self.texto_interpretacion = tb.Text(frame_consejo, wrap="word", height=5, width=50, state="disabled")
-            self.texto_interpretacion.pack(pady=10)
+            
 
         except Exception as e:
             showerror("Error", f"Error al obtener consejo de IA: {e}")
@@ -342,39 +357,79 @@ class VentanaPrincipal:
         self.texto_respuesta.insert(END, sugerencias)
         self.texto_respuesta.config(state="disabled")
 
+
     def mostrar_predicciones(self):
      try:
+        # Crear la nueva ventana
+        ventana_predicciones = tk.Toplevel(self.root)
+        ventana_predicciones.title("Predicciones de Rendimiento")
+        ventana_predicciones.geometry("850x600")
+
+        # Crear un canvas para contener todo el contenido
+        canvas = tk.Canvas(ventana_predicciones)
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        # Barra de desplazamiento para el canvas
+        scrollbar = tk.Scrollbar(ventana_predicciones, orient="vertical", command=canvas.yview)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # Configurar el canvas para que use el scrollbar
+        canvas.config(yscrollcommand=scrollbar.set)
+
+        # Crear un frame dentro del canvas
+        frame_predicciones = tb.Frame(canvas)
+        canvas.create_window((0, 0), window=frame_predicciones, anchor="nw")
+
         # Cargar y preparar datos históricos
         df_ram, df_procesador, df_disco, df_gpu = preparar_datos_historicos()
 
-        # --- Predicciones para la RAM ---
-        modelo_ram, fecha_minima_ram = entrenar_modelo(df_ram, "uso_ram")
-        interpretacion_ram = predecir_y_graficar(modelo_ram, fecha_minima_ram, "uso_ram", "Uso de RAM")
+        # Verificar si hay datos
+        if df_ram.empty or df_procesador.empty or df_disco.empty:
+            messagebox.showwarning("Advertencia", "No hay suficientes datos para generar predicciones.")
+            ventana_predicciones.destroy()
+            return
 
-        # --- Predicciones para el Procesador ---
-        # Usamos la frecuencia actual como métrica para el procesador
-        modelo_procesador, fecha_minima_procesador = entrenar_modelo(df_procesador, "frecuencia_actual")
-        interpretacion_procesador = predecir_y_graficar(
-            modelo_procesador, fecha_minima_procesador, "frecuencia_actual", "Frecuencia del Procesador (GHz)"
-        )
+        # Convertir las fechas a valores de tipo datetime
+        df_ram["fecha"] = pd.to_datetime(df_ram["fecha"], errors='coerce')
+        df_procesador["fecha"] = pd.to_datetime(df_procesador["fecha"], errors='coerce')
+        df_disco["fecha"] = pd.to_datetime(df_disco["fecha"], errors='coerce')
 
-        # --- Predicciones para el Disco Duro ---
-        modelo_disco, fecha_minima_disco = entrenar_modelo(df_disco, "uso_disco")
-        interpretacion_disco = predecir_y_graficar(modelo_disco, fecha_minima_disco, "uso_disco", "Uso del Disco (%)")
+        # Predicciones para los componentes
+        predicciones = {
+            "RAM": entrenar_modelo(df_ram, "uso_ram"),
+            "Procesador": entrenar_modelo(df_procesador, "frecuencia_actual"),
+            "Disco Duro": entrenar_modelo(df_disco, "uso_disco"),
+        }
 
-        # Combinar las interpretaciones
-        interpretacion_completa = (
-            "--- Predicciones de Rendimiento ---\n\n"
-            f"RAM:\n{interpretacion_ram}\n\n"
-            f"Procesador:\n{interpretacion_procesador}\n\n"
-            f"Disco Duro:\n{interpretacion_disco}"
-        )
+        # Crear un contenedor para los gráficos
+        frame_graficos = tb.Frame(frame_predicciones)
+        frame_graficos.pack(fill=tk.BOTH, expand=True, pady=10)
 
-        # Mostrar la interpretación en el área de texto
-        self.texto_interpretacion.config(state="normal")
-        self.texto_interpretacion.delete(1.0, END)
-        self.texto_interpretacion.insert(END, interpretacion_completa)
-        self.texto_interpretacion.config(state="disabled")
+        interpretacion_completa = "--- Predicciones de Rendimiento ---\n\n"
+
+        # Generar gráficos y mostrar las interpretaciones
+        interpretacion_ram = crear_grafico_barras(predicciones["RAM"][0], df_ram, "fecha", "uso_ram", "Uso de RAM (%)", frame_graficos)
+        interpretacion_completa += f"RAM:\n{interpretacion_ram}\n\n"
+        
+        interpretacion_procesador = crear_grafico_barras(predicciones["Procesador"][0], df_procesador, "fecha", "frecuencia_actual", "Frecuencia del Procesador (GHz)", frame_graficos)
+        interpretacion_completa += f"Procesador:\n{interpretacion_procesador}\n\n"
+        
+        interpretacion_disco = crear_grafico_barras(predicciones["Disco Duro"][0], df_disco, "fecha", "uso_disco", "Uso del Disco (%)", frame_graficos)
+        interpretacion_completa += f"Disco Duro:\n{interpretacion_disco}\n\n"
+
+        # Área de texto desplazable para la interpretación
+        texto_interpretacion = ScrolledText(frame_predicciones, wrap="word", height=10, width=90, state="normal")
+        texto_interpretacion.insert(tk.END, interpretacion_completa)
+        texto_interpretacion.config(state="disabled")
+        texto_interpretacion.pack(pady=10)
+
+        # Actualizar la región del canvas para ajustarse al contenido
+        frame_predicciones.update_idletasks()
+        canvas.config(scrollregion=canvas.bbox("all"))
+
+        # Botón para cerrar la ventana
+        boton_cerrar = tb.Button(frame_predicciones, text="Cerrar", bootstyle="danger", command=ventana_predicciones.destroy)
+        boton_cerrar.pack(pady=10)
 
      except Exception as e:
-        showerror("Error", f"Error al generar predicciones: {e}")
+        messagebox.showerror("Error", f"Error al generar predicciones: {e}")
