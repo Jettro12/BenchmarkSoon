@@ -3,34 +3,34 @@ import seaborn as sns
 import numpy as np
 
 def crear_grafico_cpu(info):
-    fig, ax = plt.subplots(figsize=(3, 1.8))  # Aumenta el tamaño de la figura
-    labels = ["Frecuencia Base", "Frecuencia Máxima", "Frecuencia Actual"]
-    values = [
-        info["Frecuencia Base (GHz)"],
-        info["Frecuencia Máxima (GHz)"],
-        info["Frecuencia Actual (GHz)"]
-    ]
-    sns.barplot(x=labels, y=values, hue=labels, palette="viridis", ax=ax, dodge=False, legend=False)
-    
-    # Ajustar el tamaño del texto de las etiquetas y títulos
-    ax.set_title("Rendimiento del CPU", fontsize=9, color='white')  # Tamaño de la fuente ajustado y color blanco
-    ax.set_ylabel("GHz", fontsize=7, color='white')  # Tamaño de la fuente ajustado y color blanco
-    ax.set_xlabel("", fontsize=7, color='white')  # Color blanco para las etiquetas del eje x
-    
-    # Ajustar el tamaño y color de las etiquetas del eje
-    ax.tick_params(axis='x', colors='white', labelsize=6)  # Tamaño ajustado y color blanco
-    ax.tick_params(axis='y', colors='white', labelsize=6)  # Tamaño ajustado y color blanco
+    # Obtener el porcentaje de uso del CPU
+    uso_cpu = info.get("Uso del CPU (%)", 0)  # Usar la clave correcta
 
-# Cambiar el color de los bordes de los ejes a blanco
-    for spine in ax.spines.values():
-        spine.set_edgecolor('white')
+    # Configuración para el gráfico radial
+    fig, ax = plt.subplots(figsize=(6, 6), subplot_kw={'projection': 'polar'})
 
-    # Eliminar el fondo blanco
+    # Convertir el porcentaje de uso en un ángulo (en radianes)
+    angulo = np.deg2rad(uso_cpu * 360 / 100)
+
+    # Dibujar el gráfico radial (un "semi-círculo" que representa el uso)
+    ax.bar(0, uso_cpu, width=angulo, color='cyan', bottom=0.0)
+
+    # Personalización del gráfico
+    ax.set_title(f'Uso del CPU: {uso_cpu}%', fontsize=14, color='white', y=1.1)
+    ax.set_xticks([])  # Eliminar los valores en el eje X
+    ax.set_yticks([0, 25, 50, 75, 100])  # Mostrar los valores del eje Y
+    ax.set_yticklabels(['0%', '25%', '50%', '75%', '100%'], fontsize=12, color='white')
+
+    # Ajustar fondo y bordes
+    ax.set_facecolor('blue')
     fig.patch.set_alpha(0.0)
-    ax.patch.set_alpha(0.0)
+
+    # Agregar un círculo central para mayor estética
+    ax.set_yticks([0, 100])
+    ax.set_ylim(0, 100)
+    ax.grid(False)  # Desactivar las líneas de la cuadrícula
 
     return fig
-
 def crear_grafico_ram(info):
     fig, ax = plt.subplots(figsize=(3, 1.8))  # Tamaño de la figura
     sizes = [info["RAM Usada (GB)"], info["RAM Libre (GB)"]]

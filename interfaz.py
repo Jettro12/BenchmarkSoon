@@ -78,7 +78,7 @@ class VentanaPrincipal:
         # Título
         label_titulo = tb.Label(
             self.contenedor,
-            text="Bienvenido al Benchmark del Sistema",
+            text="B/Athen-IA",
             **ESTILO_LABEL_TITULO,
         )
         label_titulo.pack(pady=20)
@@ -114,16 +114,17 @@ class VentanaPrincipal:
             label_fondo.image = fondo_tk
             label_fondo.place(x=fondo_x, y=fondo_y, width=576, height=768)
 
-            # Mostrar gráficos y datos
-            fig1 = crear_grafico_cpu(self.info_procesador)
+         # Mostrar gráficos y datos
+            fig1 = crear_grafico_cpu(self.info_procesador)   
             self.mostrar_categoria(
-                categoria="Frecuencias CPU",
-                datos=self.info_procesador,
-                grafico=fig1,
-                posicion=(30, 15),
-                ancho=470,
-                alto=370,
-            )
+            categoria="Uso del CPU",
+            datos=self.info_procesador,
+            grafico=fig1,
+            posicion=(30, 15),
+            ancho=470,
+           alto=370,
+)
+
 
             # Configuración para el frame de la RAM
             fig3 = crear_grafico_ram(self.info_ram)
@@ -366,3 +367,5 @@ class VentanaPrincipal:
         self.texto_respuesta.delete(1.0, END)
         self.texto_respuesta.insert(END, sugerencias)
         self.texto_respuesta.config(state="disabled")
+
+        
