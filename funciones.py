@@ -1,18 +1,25 @@
 import psutil
 import platform
 import GPUtil
+import cpuinfo
 from configuraciones import model
 
 # Función para obtener información del procesador
 def obtener_info_procesador():
+    cpu_info = cpuinfo.get_cpu_info()
     cpu_freq = psutil.cpu_freq()
+
     return {
-        "Nombre": platform.processor(),
+        "Nombre": cpu_info["brand_raw"],
+        "Fabricante": cpu_info["vendor_id_raw"],
+        "Arquitectura": platform.architecture()[0],
         "Frecuencia Base (GHz)": round(cpu_freq.min / 1000, 2) if cpu_freq else "No disponible",
         "Frecuencia Máxima (GHz)": round(cpu_freq.max / 1000, 2) if cpu_freq else "No disponible",
         "Frecuencia Actual (GHz)": round(cpu_freq.current / 1000, 2) if cpu_freq else "No disponible",
         "Núcleos Físicos": psutil.cpu_count(logical=False),
         "Núcleos Lógicos": psutil.cpu_count(logical=True),
+        "Uso del CPU (%)": psutil.cpu_percent(interval=1),
+      
     }
 
 # Función para obtener información de la RAM
@@ -37,21 +44,33 @@ def obtener_info_disco():
 
 #Obtener info del gpu
 def obtener_info_gpu():
-    try:    
+    try:
         gpus = GPUtil.getGPUs()
         if not gpus:
-            return {"GPU": "No disponible"}
+            return {
+                "Nombre": "No disponible",
+                "Carga (%)": 0,
+                "Memoria Usada (GB)": 0,
+                "Memoria Total (GB)": 0,
+                "Temperatura (°C)": 0,
+            }
         
         gpu = gpus[0]
         return {
             "Nombre": gpu.name,
             "Carga (%)": gpu.load * 100,
-            "Memoria Usada (GB)": round(gpu.memoryUsed, 2),
-            "Memoria Total (GB)": round(gpu.memoryTotal, 2),
+            "Memoria Usada (GB)": round(gpu.memoryUsed, 2) if gpu.memoryUsed is not None else 0,
+            "Memoria Total (GB)": round(gpu.memoryTotal, 2) if gpu.memoryTotal is not None else 0,
             "Temperatura (°C)": gpu.temperature,
         }
     except Exception as e:
-        return {"GPU": "No disponible"}
+        return {
+            "Nombre": "No disponible",
+            "Carga (%)": 0,
+            "Memoria Usada (GB)": 0,
+            "Memoria Total (GB)": 0,
+            "Temperatura (°C)": 0,
+        }
  
 # Función para generar el prompt personalizado
 def generar_prompt_personalizado(info_procesador, info_ram, info_disco, info_gpu):
