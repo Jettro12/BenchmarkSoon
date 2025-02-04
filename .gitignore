@@ -1,2 +1,6 @@
 **/ .env
+<<<<<<< HEAD
 **/__pycache__/
+=======
+**/ __pycache__/
+>>>>>>> 1b9f6e7ef9f7ded6f046e3d4eb63ab037c2acf3f

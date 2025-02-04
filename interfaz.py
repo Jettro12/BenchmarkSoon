@@ -1,9 +1,13 @@
+# --- Clase de la Interfaz Gráfica ---
 import ttkbootstrap as tb
-from PIL import Image, ImageTk
-from tkinter import ttk, messagebox
-from tkinter.scrolledtext import ScrolledText
-import pandas as pd
 import tkinter as tk
+from PIL import Image, ImageTk
+from tkinter.scrolledtext import ScrolledText
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from tkinter import ttk,  messagebox
+import pandas as pd
+
 from funciones import (
     obtener_info_procesador,
     obtener_info_ram,
@@ -11,6 +15,27 @@ from funciones import (
     obtener_info_gpu,
     generar_prompt_personalizado,
     obtener_consejo_ia,
+    obtener_info_gpu,
+   
+)
+from BD import (
+
+    almacenar_datos,
+    crear_grafico_barras,
+    preparar_datos_historicos,
+    
+    crear_base_de_datos,
+)
+from modelo import entrenar_modelo
+from tkinter.messagebox import showerror
+from tkinter import BOTH, X, Y, END, VERTICAL, RIGHT, LEFT, BOTTOM
+from configuraciones import (
+    ESTILO_BOTON_PRIMARIO,
+    ESTILO_BOTON_SECUNDARIO,
+    ESTILO_LABEL_TITULO,
+    ESTILO_LABEL_TEXTO,
+    ESTILO_TEXTO_CONSEJO,
+    ESTILO_LABEL_CATEGORIA,
 )
 from tkinter.messagebox import showerror, showinfo
 from tkinter import BOTH, X, Y, END, VERTICAL, RIGHT, LEFT, BOTTOM
@@ -62,15 +87,12 @@ class VentanaPrincipal:
         self.ventana_inicio()
 
     def limpiar_contenedor(self):
-        """Elimina todo el contenido del contenedor."""
         for widget in self.contenedor.winfo_children():
             widget.destroy()
 
     def ventana_inicio(self):
-        """Muestra la pantalla de inicio."""
         self.limpiar_contenedor()
 
-        # Fondo de imagen
         try:
             fondo = Image.open("Media/modelo1.png").resize((576, 768), Image.LANCZOS)
             fondo_tk = ImageTk.PhotoImage(fondo)
@@ -120,7 +142,6 @@ class VentanaPrincipal:
         boton_Prediccion.place(relx=0.0, rely=0.4, anchor="w")
 
     def ventana_analisis(self):
-        """Muestra la pantalla de análisis del sistema."""
         self.limpiar_contenedor()
 
         try:
