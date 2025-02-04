@@ -1,5 +1,9 @@
 import ttkbootstrap as tb
 from PIL import Image, ImageTk
+from tkinter import ttk, messagebox
+from tkinter.scrolledtext import ScrolledText
+import pandas as pd
+import tkinter as tk
 from funciones import (
     obtener_info_procesador,
     obtener_info_ram,
@@ -25,18 +29,27 @@ from funciones_graficos import (
     crear_grafico_disco,
     crear_grafico_gpu,
 )
+from BD import (
+    almacenar_datos,
+    crear_grafico_barras,
+    preparar_datos_historicos,
+    crear_base_de_datos,
+)
+from modelo import entrenar_modelo
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 class VentanaPrincipal:
     def __init__(self, root):
         self.root = root
-        self.root.title("Benchmark del Sistema")
+        self.root.title("Athen-IA")
         # Configuración inicial con ttkbootstrap
         self.style = tb.Style("vapor")  # Cambia el tema aquí según tus preferencias
         pantalla_ancho = self.root.winfo_screenwidth()
         pantalla_alto = self.root.winfo_screenheight()
         self.root.geometry(f"{pantalla_ancho}x{pantalla_alto}")
-
+        
+        # Crear las tablas si no existen
+        crear_base_de_datos()
         # Configurar estilos personalizados
         self.style.configure("Primary.TButton", **ESTILO_BOTON_PRIMARIO)
         self.style.configure("Secondary.TButton", **ESTILO_BOTON_SECUNDARIO)
@@ -78,7 +91,7 @@ class VentanaPrincipal:
         # Título
         label_titulo = tb.Label(
             self.contenedor,
-            text="Bienvenido al Benchmark del Sistema",
+            text="Athen-IA",
             **ESTILO_LABEL_TITULO,
         )
         label_titulo.pack(pady=20)
@@ -90,17 +103,35 @@ class VentanaPrincipal:
             style="Primary.TButton",
             command=self.ventana_analisis,
         )
+        boton_Prediccion = tb.Button(
+            self.contenedor,
+            text="Predicciones",
+            command=self.mostrar_predicciones,
+            style="Primary.TButton",  # Aplicar estilo primario
+        )
+        boton_venanalizar = tb.Button(
+            self.contenedor,
+            text="Analisis",
+            command=self.ventana_inicio,
+            style="Primary.TButton",  # Aplicar estilo primario
+        )
+        boton_venanalizar.place(relx=0.0, rely=0.2, anchor="w")
         boton_analizar.place(relx=0.5, rely=0.8, anchor="center")
+        boton_Prediccion.place(relx=0.0, rely=0.4, anchor="w")
 
     def ventana_analisis(self):
         """Muestra la pantalla de análisis del sistema."""
         self.limpiar_contenedor()
 
         try:
+            # Obtener información del sistema
             self.info_procesador = obtener_info_procesador()
             self.info_ram = obtener_info_ram()
             self.info_disco = obtener_info_disco()
             self.info_gpu = obtener_info_gpu()
+            
+            # Almacenar los datos en la base de datos al presionar "Analizar"
+            almacenar_datos(self.info_procesador, self.info_ram, self.info_disco, self.info_gpu)
            
             fondo = Image.open("Media/modelo2.png").resize((576, 768), Image.LANCZOS)
             fondo_tk = ImageTk.PhotoImage(fondo)
@@ -160,13 +191,13 @@ class VentanaPrincipal:
                 )
             else:
                 self.mostrar_categoria(
-                categoria="GPU",
-                datos=self.info_gpu,
-                grafico=fig5,
-                posicion=(30, 405),
-                ancho=470,
-                alto=280,
-            )
+                    categoria="GPU",
+                    datos=self.info_gpu,
+                    grafico=fig5,
+                    posicion=(30, 405),
+                    ancho=470,
+                    alto=280,
+                )
 
             # Aplicar estilo al botón de análisis
             boton_consejo = tb.Button(
@@ -183,7 +214,7 @@ class VentanaPrincipal:
         """Muestra una categoría con su frame y labels correspondientes."""
         x, y = posicion
 
-        # Crear el frame para la catesgoría
+        # Crear el frame para la categoría
         frame_categoria = tb.Labelframe(
             self.contenedor,
             text=categoria,
@@ -228,7 +259,7 @@ class VentanaPrincipal:
                 self.info_procesador,
                 self.info_ram,
                 self.info_disco,
-                self.info_gpu,                
+                self.info_gpu,
             )
             consejo = obtener_consejo_ia(prompt)
 
@@ -294,16 +325,19 @@ class VentanaPrincipal:
     def chatbot_seccion(self, frame_chatbot):
         """Agrega la sección de chatbot a la ventana."""
         frame_chat = tb.Labelframe(
-            frame_chatbot, 
-            text="Chatbot de Optimización", 
-            padding=10, bootstyle="secondary")
+            frame_chatbot,
+            text="Chatbot de Optimización",
+            padding=10,
+            bootstyle="secondary"
+        )
         frame_chat.pack(fill=BOTH, expand=True, padx=10, pady=10)
 
         # Pregunta inicial
         label_pregunta = tb.Label(
-            frame_chat, 
-            text="¿Necesitas algo en especial?", 
-            **ESTILO_LABEL_TITULO)
+            frame_chat,
+            text="¿Necesitas algo en especial?",
+            **ESTILO_LABEL_TITULO
+        )
         label_pregunta.pack(pady=5)
 
         # Opciones predefinidas
@@ -311,17 +345,18 @@ class VentanaPrincipal:
         opciones = ["Optimizar para jugar", "Optimizar para programar", "Otro"]
         for opcion in opciones:
             tb.Radiobutton(
-                frame_chat, 
-                text=opcion, 
-                variable=self.seleccion, 
+                frame_chat,
+                text=opcion,
+                variable=self.seleccion,
                 value=opcion
             ).pack(anchor="w")
 
         # Entrada para un prompt personalizado
         label_prompt = tb.Label(
-            frame_chat, 
-            text="O escribe un prompt personalizado:", 
-            **ESTILO_LABEL_PROMPTPERSONAL)
+            frame_chat,
+            text="O escribe un prompt personalizado:",
+            **ESTILO_LABEL_PROMPTPERSONAL
+        )
         label_prompt.pack(pady=5)
 
         self.entry_prompt = tb.Entry(frame_chat, width=50)
@@ -329,7 +364,9 @@ class VentanaPrincipal:
 
         # Botón para obtener sugerencias
         boton_obtener = tb.Button(
-            frame_chat, text="Obtener Sugerencias", command=self.obtener_sugerencias
+            frame_chat,
+            text="Obtener Sugerencias",
+            command=self.obtener_sugerencias
         )
         boton_obtener.pack(pady=10)
 
@@ -344,20 +381,34 @@ class VentanaPrincipal:
         if opcion == "Otro":
             if prompt_usuario:
                 # Generar el prompt personalizado del usuario
-                prompt_combinado = generar_prompt_personalizado(self.info_procesador, self.info_ram, self.info_disco, self.info_gpu) + f"\n\n{prompt_usuario}"
+                prompt_combinado = generar_prompt_personalizado(
+                    self.info_procesador,
+                    self.info_ram,
+                    self.info_disco,
+                    self.info_gpu
+                ) + f"\n\n{prompt_usuario}"
                 self.generar_sugerencias(prompt_combinado)
             else:
                 showerror("Advertencia", "Por favor, ingresa un prompt personalizado.")
         else:
             if opcion == "Optimizar para jugar":
-                prompt_jugar = generar_prompt_personalizado(self.info_procesador, self.info_ram, self.info_disco, self.info_gpu)
+                prompt_jugar = generar_prompt_personalizado(
+                    self.info_procesador,
+                    self.info_ram,
+                    self.info_disco,
+                    self.info_gpu
+                )
                 prompt_jugar += "\n\nDe acuerdo al analisis del sistema quiero suguerencias cortas, especificas y de mucho valor para optimizar la PC para jugar y que vaya con fluides."
                 self.generar_sugerencias(prompt_jugar)
             elif opcion == "Optimizar para programar":
-                prompt_programar = generar_prompt_personalizado(self.info_procesador, self.info_ram, self.info_disco, self.info_gpu)
+                prompt_programar = generar_prompt_personalizado(
+                    self.info_procesador,
+                    self.info_ram,
+                    self.info_disco,
+                    self.info_gpu
+                )
                 prompt_programar += "\n\nDe acuerdo al analisis del sistema quiero suguerencias cortas, especificas y de mucho valor para optimizar la PC para Programas y siguiere para tres tipos de lenguajes python Java C# para que obtenga lo recursos necesarios para programar ."
                 self.generar_sugerencias(prompt_programar)
-
 
     def generar_sugerencias(self, prompt_usuario):
         """Genera sugerencias personalizadas basadas en el prompt del usuario."""
@@ -366,3 +417,142 @@ class VentanaPrincipal:
         self.texto_respuesta.delete(1.0, END)
         self.texto_respuesta.insert(END, sugerencias)
         self.texto_respuesta.config(state="disabled")
+
+    def mostrar_predicciones(self):
+     self.limpiar_contenedor()
+
+     try:
+        # Crear un Canvas y un Scrollbar
+        canvas = tk.Canvas(self.contenedor)
+        scrollbar = tb.Scrollbar(self.contenedor, orient="vertical", command=canvas.yview)
+        scrollable_frame = tb.Frame(canvas)
+
+        # Configurar el Canvas para que sea desplazable
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        # Empaquetar el Canvas y el Scrollbar
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        # Cargar y preparar datos históricos
+        df_procesador, df_ram, df_disco, df_gpu = preparar_datos_historicos()
+
+        # Verificar que existan datos suficientes para las predicciones
+        if df_ram.empty or df_procesador.empty or df_disco.empty:
+            messagebox.showwarning("Advertencia", "No hay suficientes datos para generar predicciones.")
+            self.ventana_inicio()
+            return
+
+        # Convertir fechas a datetime
+        df_ram["fecha"] = pd.to_datetime(df_ram["fecha"], errors='coerce')
+        df_procesador["fecha"] = pd.to_datetime(df_procesador["fecha"], errors='coerce')
+        df_disco["fecha"] = pd.to_datetime(df_disco["fecha"], errors='coerce')
+
+        # --- Convertir todos los nombres de columnas a minúsculas ---
+        df_ram.columns = [col.lower() for col in df_ram.columns]
+        df_procesador.columns = [col.lower() for col in df_procesador.columns]
+        df_disco.columns = [col.lower() for col in df_disco.columns]
+
+        # --- Agregar columna 'dias' calculada a partir de 'fecha' ---
+        df_ram["dias"] = (df_ram["fecha"] - df_ram["fecha"].min()).dt.days
+        df_procesador["dias"] = (df_procesador["fecha"] - df_procesador["fecha"].min()).dt.days
+        df_disco["dias"] = (df_disco["fecha"] - df_disco["fecha"].min()).dt.days
+
+        # --- Verificar y renombrar columnas según corresponda ---
+        if "uso_ram" not in df_ram.columns and "uso de ram (%)" in df_ram.columns:
+            df_ram.rename(columns={"uso de ram (%)": "uso_ram"}, inplace=True)
+        if "uso_cpu" not in df_procesador.columns and "uso del cpu (%)" in df_procesador.columns:
+            df_procesador.rename(columns={"uso del cpu (%)": "uso_cpu"}, inplace=True)
+
+        # --- Seleccionar únicamente las columnas relevantes para el modelo ---
+        # Usaremos solo la columna 'dias' para predecir la variable objetivo.
+        df_ram_features = df_ram[["dias", "uso_ram"]]
+        df_procesador_features = df_procesador[["dias", "uso_cpu"]]
+        df_disco_features = df_disco[["dias", "uso_disco"]]
+
+        # Opcional: Imprimir las columnas para verificar
+        # print("Columnas df_ram_features:", df_ram_features.columns)
+        # print("Columnas df_procesador_features:", df_procesador_features.columns)
+        # print("Columnas df_disco_features:", df_disco_features.columns)
+
+        # Obtener predicciones usando el modelo entrenado
+        predicciones = {
+            "RAM": entrenar_modelo(df_ram_features, "uso_ram"),
+            "Procesador": entrenar_modelo(df_procesador_features, "uso_cpu"),
+            "Disco Duro": entrenar_modelo(df_disco_features, "uso_disco"),
+        }
+
+        # Títulos y estilos
+        label_titulo = tb.Label(
+            scrollable_frame,
+            text="Predicciones de Rendimiento",
+            **ESTILO_LABEL_TITULO,
+        )
+        label_titulo.pack(pady=20, fill="x", anchor="center")
+
+        # Frame para los gráficos en 2 filas
+        frame_graficos = tb.Frame(scrollable_frame)
+        frame_graficos.pack(fill="x", expand=True, pady=10)
+
+        # Organizar los gráficos en 2 filas
+        fila1 = tb.Frame(frame_graficos)
+        fila1.pack(side="top", fill="x", padx=10)
+        fila2 = tb.Frame(frame_graficos)
+        fila2.pack(side="top", fill="x", padx=10)
+
+        interpretacion_completa = "--- Predicciones de Rendimiento ---\n\n"
+
+        # En la función de creación de gráficos, usamos 'dias' como eje X
+        interpretacion_ram = crear_grafico_barras(
+            predicciones["RAM"][0],      # Modelo entrenado para RAM
+            df_ram_features,             # DataFrame con columnas 'dias' y 'uso_ram'
+            "dias",                      # Eje X: 'dias'
+            "uso_ram",                   # Eje Y: 'uso_ram'
+            "Uso de RAM (%)",            # Título del gráfico
+            fila1                      # Frame donde se mostrará el gráfico
+        )
+        interpretacion_completa += f"RAM:\n{interpretacion_ram}\n\n"
+
+        interpretacion_procesador = crear_grafico_barras(
+            predicciones["Procesador"][0],
+            df_procesador_features,
+            "dias",
+            "uso_cpu",
+            "Uso del Procesador (%)",
+            fila1
+        )
+        interpretacion_completa += f"Procesador:\n{interpretacion_procesador}\n\n"
+
+        interpretacion_disco = crear_grafico_barras(
+            predicciones["Disco Duro"][0],
+            df_disco_features,
+            "dias",
+            "uso_disco",
+            "Uso del Disco (%)",
+            fila2
+        )
+        interpretacion_completa += f"Disco Duro:\n{interpretacion_disco}\n\n"
+
+        # Área de texto desplazable para interpretación
+        texto_interpretacion = ScrolledText(scrollable_frame, wrap="word", height=10, width=90, state="normal")
+        texto_interpretacion.insert(tk.END, interpretacion_completa)
+        texto_interpretacion.config(state="disabled")
+        texto_interpretacion.pack(pady=10, fill="x", padx=10)
+
+        # Botón para regresar
+        boton_regresar = tb.Button(
+            scrollable_frame,
+            text="Regresar",
+            command=self.ventana_inicio,
+            style="Danger.TButton",
+        )
+        boton_regresar.pack(pady=10, fill="x", padx=10)
+
+     except Exception as e:
+        messagebox.showerror("Error", f"Error al generar predicciones: {e}")
