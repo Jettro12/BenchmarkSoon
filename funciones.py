@@ -1,8 +1,9 @@
 import psutil
 import platform
 import GPUtil
-from configuraciones import model
 import cpuinfo
+from configuraciones import model
+
 # Función para obtener información del procesador
 def obtener_info_procesador():
     cpu_info = cpuinfo.get_cpu_info()
@@ -17,9 +18,10 @@ def obtener_info_procesador():
         "Frecuencia Actual (GHz)": round(cpu_freq.current / 1000, 2) if cpu_freq else "No disponible",
         "Núcleos Físicos": psutil.cpu_count(logical=False),
         "Núcleos Lógicos": psutil.cpu_count(logical=True),
-        "Uso del CPU (%)": psutil.cpu_percent(interval=1)
-            
+        "Uso del CPU (%)": psutil.cpu_percent(interval=1),
+      
     }
+
 # Función para obtener información de la RAM
 def obtener_info_ram():
     ram_info = psutil.virtual_memory()
