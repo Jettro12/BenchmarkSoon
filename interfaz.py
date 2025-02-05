@@ -115,7 +115,7 @@ class VentanaPrincipal:
         )
          
         boton_analizar.place(relx=0.5, rely=0.8, anchor="center")
-        boton_Prediccion.place(relx=0.0, rely=0.4, anchor="w")
+        boton_Prediccion.place(relx=0.5, rely=0.9, anchor="center")
 
     def ventana_analisis(self):
         """Muestra la pantalla de análisis del sistema."""
@@ -539,11 +539,11 @@ class VentanaPrincipal:
             # Botón para regresar al análisis
             boton_venanalizar = tb.Button(
                 self.contenedor,
-                text="Analisis",
+                text="Volver al Inicio",
                 command=self.ventana_inicio,
                 style="Primary.TButton",
             )
-            boton_venanalizar.place(relx=0.0, rely=0.2, anchor="w")
+            boton_venanalizar.place(relx=0.0, rely=0.9, anchor="w")
 
             # Centrar el contenido en el scrollable_frame
             scrollable_frame.update_idletasks()

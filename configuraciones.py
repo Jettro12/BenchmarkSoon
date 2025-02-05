@@ -13,7 +13,7 @@ model = genai.GenerativeModel("gemini-2.0-flash-exp")
 ESTILO_BOTON_PRIMARIO = {
     "font": ("Arial", 14, "bold"),  # Fuente del botón
     "padding": 10,  # Espacio interno
-    "background": "#1E2F59",  # Color de fondo (verde)
+   # "background": "#1E2F59",  # Color de fondo (verde)
     "foreground": "#2E86C1",  # Color del texto (blanco)
     "bordercolor": "#991FA6",  # Color del borde
     "borderwidth": 2,  # Grosor del borde

@@ -49,7 +49,7 @@ def crear_grafico_ram(info):
         text.set_color('white')
     for autotext in autotexts:
         autotext.set_color('white')
-    ax.set_title("Uso de RAM (Dona)", fontsize=9, color='white')  # Tamaño de la fuente ajustado y color blanco
+    ax.set_title("Uso de RAM", fontsize=9, color='white')  # Tamaño de la fuente ajustado y color blanco
 
     # Eliminar el fondo blanco
     fig.patch.set_alpha(0.0)
@@ -75,7 +75,7 @@ def crear_grafico_disco(info):
         text.set_color('white')
     for autotext in autotexts:
         autotext.set_color('white')
-    ax.set_title("Espacio en Disco (Dona)", fontsize=9, color='white')  # Tamaño de la fuente ajustado y color blanco
+    ax.set_title("Espacio en Disco", fontsize=9, color='white')  # Tamaño de la fuente ajustado y color blanco
 
     # Eliminar el fondo blanco
     fig.patch.set_alpha(0.0)
