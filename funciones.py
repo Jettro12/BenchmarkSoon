@@ -4,6 +4,7 @@ import GPUtil
 import cpuinfo
 from configuraciones import model
 
+# Función para obtener información del procesador
 def obtener_info_procesador():
     cpu_info = cpuinfo.get_cpu_info()
     cpu_freq = psutil.cpu_freq()
@@ -21,6 +22,7 @@ def obtener_info_procesador():
       
     }
 
+# Función para obtener información de la RAM
 def obtener_info_ram():
     ram_info = psutil.virtual_memory()
     return {
@@ -90,10 +92,11 @@ def generar_prompt_personalizado(info_procesador, info_ram, info_disco, info_gpu
     prompt += "Proporciona acciones específicas para optimizar este sistema."
     return prompt
 
+# Función para obtener consejo de la IA utilizando Gemini
 def obtener_consejo_ia(prompt):
-     try:
+    try:
+        # Llamada al modelo de Gemini con el prompt
         response = model.generate_content(prompt)
         return response.text
-     except Exception as e:
+    except Exception as e:
         return f"Error al generar el consejo: {e}"
-    
