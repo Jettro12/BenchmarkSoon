@@ -13,27 +13,27 @@ model = genai.GenerativeModel("gemini-2.0-flash-exp")
 ESTILO_BOTON_PRIMARIO = {
     "font": ("Arial", 14, "bold"),  # Fuente del botón
     "padding": 12,  # Espacio interno
-    "background": "white",  # Color de fondo (verde)
-    "foreground": "#F97316",  # Color del texto (blanco)
-    "bordercolor": "#F97316",  # Color del borde
+    "background": "#1E90FF",  # Color de fondo (verde)
+    "foreground": "white",  # Color del texto (blanco)
+    "bordercolor": "#1E90FF",  # Color del borde
     "borderwidth": 2,  # Grosor del borde
     "relief": "raised",  # Estilo del borde
-    "focuscolor": "#FF5733",  # Color cuando el botón tiene el foco
-    "activebackground": "#F59E0B",  # Color de fondo al hacer clic
-    "activeforeground": "#F97316",  # Color del texto al hacer clic
+    "focuscolor": "#4682B4",  # Color cuando el botón tiene el foco
+    "activebackground": "#5B9BD5",  # Color de fondo al hacer clic
+    "activeforeground": "white",  # Color del texto al hacer clic
 }
 
 # Estilo para los botones de la ventana de consejos (Volver al inicio y Salir)
 ESTILO_BOTON_SECUNDARIO = {
     "font": ("Helvetica", 12, "bold"),  # Fuente del botón
     "padding": 12,  # Espacio interno
-    "background": "#FF5733",  # Color de fondo (naranja)
+    "background": "#2e232b",  # Color de fondo (naranja)
     "foreground": "white",  # Color del texto (blanco)
-    "bordercolor": "#E64A19",  # Color del borde
+    "bordercolor": "#6C4F60",  # Color del borde
     "borderwidth": 2,  # Grosor del borde
     "relief": "raised",  # Estilo del borde
-    "focuscolor": "#FF5733",  # Color cuando el botón tiene el foco
-    "activebackground": "#EA580C",  # Naranja oscuro al presionar
+    "focuscolor": "#40212C",  # Color cuando el botón tiene el foco
+    "activebackground": "#4A3C46",  # Naranja oscuro al presionar
     "activeforeground": "white",  # Mantener texto blanco
 }
 
@@ -81,5 +81,4 @@ ESTILO_LABEL_TEXTO1 = {
 ESTILO_FRAMES = {
         "relief": "solid",  # Borde sólido para el frame
         "borderwidth": 2,  # Grosor del borde
-        
 }

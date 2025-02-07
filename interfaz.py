@@ -118,7 +118,7 @@ class VentanaPrincipal:
 
         # Fondo de imagen
         try:
-            fondo = Image.open("Media/modelo1.png").resize((576, 768), Image.LANCZOS)
+            fondo = Image.open("BenchmarkSoon/Media/modelo1.png").resize((576, 768), Image.LANCZOS)
             fondo_tk = ImageTk.PhotoImage(fondo)
 
             self.root.update()
@@ -176,7 +176,7 @@ class VentanaPrincipal:
             # Almacenar los datos en la base de datos al presionar "Analizar"
             almacenar_datos(self.info_procesador, self.info_ram, self.info_disco, self.info_gpu)
            
-            fondo = Image.open("Media/modelo2.png").resize((576, 768), Image.LANCZOS)
+            fondo = Image.open("BenchmarkSoon/Media/modelo2.png").resize((576, 768), Image.LANCZOS)
             fondo_tk = ImageTk.PhotoImage(fondo)
 
             ventana_ancho = self.root.winfo_width()
@@ -592,28 +592,6 @@ class VentanaPrincipal:
             (serie_disco, predicciones_disco, "Uso del Disco (%)")
         ]
 
-        # Verificar si hay datos de GPU
-        if not df_gpu.empty:
-            # Convertir fechas a datetime y nombres de columnas a minúsculas
-            df_gpu["fecha"] = pd.to_datetime(df_gpu["fecha"], errors='coerce')
-            df_gpu.columns = [col.lower() for col in df_gpu.columns]
-
-            # Verificar y renombrar columnas según corresponda
-            if "uso_gpu" not in df_gpu.columns and "uso de gpu (%)" in df_gpu.columns:
-                df_gpu.rename(columns={"uso de gpu (%)": "uso_gpu"}, inplace=True)
-
-            # Preparar serie temporal para ARIMA
-            serie_gpu = df_gpu.set_index("fecha")["uso_gpu"]
-
-            # Entrenar modelo ARIMA para GPU
-            modelo_gpu = entrenar_modelo_arima(serie_gpu, orden=(1, 1, 1))
-
-            # Hacer predicciones futuras para GPU
-            predicciones_gpu = hacer_predicciones_arima(modelo_gpu, pasos_futuros=6)
-
-            # Agregar gráfico de GPU a la lista
-            graficos.append((serie_gpu, predicciones_gpu, "Uso de GPU (%)"))
-
         # Generar gráficos en grid dinámico
         for i, (serie, pred, titulo) in enumerate(graficos):
             row = i // 2  # Dos gráficos por fila
@@ -646,7 +624,7 @@ class VentanaPrincipal:
             label_mensaje.pack(pady=20, fill="both", expand=True)
 
 
-            self._crear_botones_navegacion()
+        self._crear_botones_navegacion()
         
 
         # Centrar el contenido en el scrollable_frame
