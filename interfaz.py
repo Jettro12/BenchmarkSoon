@@ -20,8 +20,8 @@ from configuraciones import (
     ESTILO_BOTON_SECUNDARIO,
     ESTILO_LABEL_TITULO,
     ESTILO_LABEL_TEXTO,
-    ESTILO_TEXTO_CONSEJO,
-    ESTILO_LABEL_CATEGORIA,
+    #ESTILO_TEXTO_CONSEJO,
+    #ESTILO_LABEL_CATEGORIA,
     ESTILO_LABEL_PROMPTPERSONAL
 )
 from funciones_graficos import (
@@ -42,6 +42,7 @@ hacer_predicciones_arima
 
 )
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
 
 class VentanaPrincipal:
     def __init__(self, root):
@@ -294,13 +295,19 @@ class VentanaPrincipal:
         frame_principal = tb.Frame(self.contenedor)
         frame_principal.pack(fill=BOTH, expand=True, padx=10, pady=10)
 
+        # Configurar el grid en el frame principal
+        frame_principal.grid_rowconfigure(0, weight=1)  # Fila 0 ocupa todo el espacio vertical
+        frame_principal.grid_columnconfigure(0, weight=2)  # Columna 0 (consejo) ocupa 2/3 del espacio
+        frame_principal.grid_columnconfigure(1, weight=1)  # Columna 1 (chatbot) ocupa 1/3 del espacio
+
+
         # Frame para el lado izquierdo (consejo)
         frame_izquierdo = tb.Frame(frame_principal)
-        frame_izquierdo.pack(side=LEFT, fill=BOTH, expand=True, padx=10, pady=10)
+        frame_izquierdo.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
 
         # Frame para el lado derecho (chatbot)
         frame_derecho = tb.Frame(frame_principal)
-        frame_derecho.pack(side=RIGHT, fill=BOTH, expand=True, padx=10, pady=10)
+        frame_derecho.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
 
         try:
             # Generar el prompt y obtener el consejo
