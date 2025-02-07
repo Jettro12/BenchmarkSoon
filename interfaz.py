@@ -118,7 +118,7 @@ class VentanaPrincipal:
 
         # Fondo de imagen
         try:
-            fondo = Image.open("BenchmarkSoon/Media/modelo1.png").resize((576, 768), Image.LANCZOS)
+            fondo = Image.open("Media/modelo1.png").resize((576, 768), Image.LANCZOS)
             fondo_tk = ImageTk.PhotoImage(fondo)
 
             self.root.update()
@@ -176,7 +176,7 @@ class VentanaPrincipal:
             # Almacenar los datos en la base de datos al presionar "Analizar"
             almacenar_datos(self.info_procesador, self.info_ram, self.info_disco, self.info_gpu)
            
-            fondo = Image.open("BenchmarkSoon/Media/modelo2.png").resize((576, 768), Image.LANCZOS)
+            fondo = Image.open("Media/modelo2.png").resize((576, 768), Image.LANCZOS)
             fondo_tk = ImageTk.PhotoImage(fondo)
 
             ventana_ancho = self.root.winfo_width()
