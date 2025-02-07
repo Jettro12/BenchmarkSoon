@@ -42,7 +42,8 @@ hacer_predicciones_arima
 
 )
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-
+import markdown
+from tkhtmlview import HTMLLabel
 
 class VentanaPrincipal:
     def __init__(self, root):
@@ -319,36 +320,21 @@ class VentanaPrincipal:
             )
             consejo = obtener_consejo_ia(prompt)
 
-            # Crear un Canvas para el scroll en el lado izquierdo
-            canvas = tb.Canvas(frame_izquierdo)
-            canvas.pack(side=LEFT, fill=BOTH, expand=True)
-
-            # Barra de desplazamiento
-            scrollbar = tb.Scrollbar(frame_izquierdo, orient=VERTICAL, command=canvas.yview)
-            scrollbar.pack(side=RIGHT, fill=Y)
-
-            canvas.configure(yscrollcommand=scrollbar.set)
-            canvas.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-
-            # Frame interno para el contenido del consejo
-            frame_consejo = tb.Frame(canvas)
-            canvas.create_window((0, 0), window=frame_consejo, anchor="nw")
-
+            
             # Aplicar estilo al título del consejo
             label_consejo = tb.Label(
-                frame_consejo,
+                frame_izquierdo,
                 text="Consejo de Optimización:",
                 **ESTILO_LABEL_TITULO,
             )
             label_consejo.pack(pady=10)
 
-            # Aplicar estilo al texto del consejo
-            texto_consejo = tb.Label(
-                frame_consejo,
-                text=consejo,
-                **ESTILO_TEXTO_CONSEJO,
-            )
-            texto_consejo.pack(pady=10)
+            # Convertir el consejo a HTML
+            consejo_html = markdown.markdown(consejo)
+
+            # Mostrar el consejo en formato HTML
+            html_label = HTMLLabel(frame_izquierdo, html=consejo_html)
+            html_label.pack(fill="both", expand=True, padx=10,pady=10)
 
         except Exception as e:
             showerror("Error", f"Error al obtener consejo de IA: {e}")
@@ -383,10 +369,10 @@ class VentanaPrincipal:
         frame_chat = tb.Labelframe(
             frame_chatbot,
             text="Chatbot de Optimización",
-            padding=10,
+            padding=9,
             bootstyle="secondary"
         )
-        frame_chat.pack(fill=BOTH, expand=True, padx=10, pady=10)
+        frame_chat.pack(fill=BOTH, expand=True, padx=6, pady=10)
 
         # Pregunta inicial
         label_pregunta = tb.Label(
@@ -399,6 +385,7 @@ class VentanaPrincipal:
         # Opciones predefinidas
         self.seleccion = tb.StringVar(value="Otro")
         opciones = ["Optimizar para jugar", "Optimizar para programar", "Otro"]
+
         for opcion in opciones:
             tb.Radiobutton(
                 frame_chat,
@@ -407,16 +394,6 @@ class VentanaPrincipal:
                 value=opcion
             ).pack(anchor="w")
 
-        # Entrada para un prompt personalizado
-        label_prompt = tb.Label(
-            frame_chat,
-            text="O escribe un prompt personalizado:",
-            **ESTILO_LABEL_PROMPTPERSONAL
-        )
-        label_prompt.pack(pady=5)
-
-        self.entry_prompt = tb.Entry(frame_chat, width=50)
-        self.entry_prompt.pack(pady=5)
 
         # Botón para obtener sugerencias
         boton_obtener = tb.Button(
@@ -427,8 +404,37 @@ class VentanaPrincipal:
         boton_obtener.pack(pady=10)
 
         # Área de salida para las sugerencias
-        self.texto_respuesta = tb.Text(frame_chat, wrap="word", height=10, width=80, state="disabled")
-        self.texto_respuesta.pack(pady=10)
+        self.texto_respuesta = HTMLLabel(frame_chat, html="")  # Usar HTMLLabel en lugar de Text
+        self.texto_respuesta.pack(fill="both", expand=True, padx=5, pady=15)
+
+
+        # Frame para el input del prompt personalizado (se ubicará antes del cuadro de salida)
+        self.frame_prompt = tb.Frame(frame_chat)
+
+        # Entrada para un prompt personalizado
+        label_prompt = tb.Label(
+            self.frame_prompt,
+            text="Detalla lo que necesitas:",
+            **ESTILO_LABEL_PROMPTPERSONAL
+        )
+        label_prompt.pack(pady=5)
+
+        self.entry_prompt = tb.Entry(self.frame_prompt, width=50)
+        self.entry_prompt.pack(pady=5)
+
+        # Vincular cambios en la selección a la actualización de la visibilidad del input
+        self.seleccion.trace_add("write", lambda *args: self.actualizar_visibilidad_prompt())
+
+        # Aplicar visibilidad inicial
+        self.actualizar_visibilidad_prompt()
+
+    def actualizar_visibilidad_prompt(self):
+        """Muestra el input antes del cuadro de salida si la opción seleccionada es 'Otro'."""
+        if self.seleccion.get() == "Otro":
+            self.frame_prompt.pack(before=self.texto_respuesta, pady=5)  # Ubicarlo antes de la salida de texto
+        else:
+            self.frame_prompt.pack_forget()  # Ocultar si no es "Otro"
+
 
     def obtener_sugerencias(self):
         opcion = self.seleccion.get()
@@ -468,11 +474,11 @@ class VentanaPrincipal:
 
     def generar_sugerencias(self, prompt_usuario):
         """Genera sugerencias personalizadas basadas en el prompt del usuario."""
-        sugerencias = obtener_consejo_ia(prompt_usuario)
-        self.texto_respuesta.config(state="normal")
-        self.texto_respuesta.delete(1.0, END)
-        self.texto_respuesta.insert(END, sugerencias)
-        self.texto_respuesta.config(state="disabled")
+        sugerencias_md = obtener_consejo_ia(prompt_usuario)
+        # Convertir Markdown a HTML
+        sugerencias_html = markdown.markdown(sugerencias_md)
+        # Mostrar las sugerencias en formato HTML
+        self.texto_respuesta.set_html(sugerencias_html)
 
     def mostrar_predicciones(self):
      self.limpiar_contenedor()
