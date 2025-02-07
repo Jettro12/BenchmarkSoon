@@ -1,9 +1,10 @@
 import ttkbootstrap as tb
 from PIL import Image, ImageTk
-from tkinter import ttk, messagebox
+from tkinter import  messagebox
 from tkinter.scrolledtext import ScrolledText
 import pandas as pd
 import tkinter as tk
+import requests
 from funciones import (
     obtener_info_procesador,
     obtener_info_ram,
@@ -70,6 +71,32 @@ class VentanaPrincipal:
         for widget in self.contenedor.winfo_children():
             widget.destroy()
 
+    def _crear_botones_navegacion(self):
+        """Crea y posiciona los botones de navegación comunes."""
+        boton_Prediccion = tb.Button(
+            self.contenedor,
+            text="Predicciones",
+            command=self.mostrar_predicciones,
+            style="Primary.TButton",
+        )
+        boton_inicio = tb.Button(
+            self.contenedor,
+            text="Inicio",
+            command=self.ventana_inicio,
+            style="Primary.TButton",
+        )
+
+        boton_salir = tb.Button(
+         self.contenedor,
+         text="Salir",
+         command=self.root.quit,
+          style="Primary.TButton",
+        )
+ 
+        boton_inicio.place(relx=0.0, rely=0.2, anchor="w")
+        boton_Prediccion.place(relx=0.0, rely=0.4, anchor="w")
+        boton_salir.place(relx=0.0, rely=0.8, anchor="w")
+
     def ventana_inicio(self):
         """Muestra la pantalla de inicio."""
         self.limpiar_contenedor()
@@ -107,15 +134,18 @@ class VentanaPrincipal:
             style="Primary.TButton",
             command=self.ventana_analisis,
         )
-        boton_Prediccion = tb.Button(
-            self.contenedor,
-            text="Predicciones",
-            command=self.mostrar_predicciones,
-            style="Primary.TButton",  # Aplicar estilo primario
-        )
-         
+        
         boton_analizar.place(relx=0.5, rely=0.8, anchor="center")
-        boton_Prediccion.place(relx=0.5, rely=0.9, anchor="center")
+        self._crear_botones_navegacion()
+
+    def verificar_conexion_internet(self):
+        """Verifica si hay conexión a Internet."""
+        try:
+            # Intentar hacer una solicitud a un servidor confiable
+            requests.get("https://www.google.com", timeout=5)
+            return True
+        except requests.ConnectionError:
+            return False
 
     def ventana_analisis(self):
         """Muestra la pantalla de análisis del sistema."""
@@ -149,8 +179,8 @@ class VentanaPrincipal:
                 categoria="Frecuencias CPU",
                 datos=self.info_procesador,
                 grafico=fig1,
-                posicion=(30, 15),
-                ancho=470,
+                posicion=(86, 15),
+                ancho=411   ,
                 alto=370,
             )
 
@@ -160,7 +190,7 @@ class VentanaPrincipal:
                 categoria="RAM",
                 datos=self.info_ram,
                 grafico=fig3,
-                posicion=(1100, 15),
+                posicion=(973, 15),
                 ancho=200,
                 alto=280,
             )
@@ -171,8 +201,8 @@ class VentanaPrincipal:
                 categoria="Disco",
                 datos=self.info_disco,
                 grafico=fig4,
-                posicion=(1100, 405),
-                ancho=210,
+                posicion=(973, 405),
+                ancho=200,
                 alto=280,
             )
 
@@ -183,8 +213,8 @@ class VentanaPrincipal:
                     categoria="GPU",
                     datos={"GPU": "No se detecto ninguna GPU en este sistema"},
                     grafico=fig5,
-                    posicion=(30, 405),
-                    ancho=470,
+                    posicion=(86, 405),
+                    ancho=380,
                     alto=280,
                 )
             else:
@@ -197,16 +227,37 @@ class VentanaPrincipal:
                     alto=280,
                 )
 
+
+             
+ 
             # Aplicar estilo al botón de análisis
             boton_consejo = tb.Button(
                 self.contenedor,
                 text="Dame un consejo Atenea",
-                command=self.ventana_consejo,
+                command=self.verificar_y_redirigir,  # Cambiar el comando
                 style="Primary.TButton",
             )
+            
+            boton_regresar = tb.Button(
+             self.contenedor,
+             text="Regresar",
+             command=self.ventana_inicio,
+             style="Secundary.TButton",
+            )
+            boton_regresar.place(relx=0.95, rely=0.89, anchor="e")
             boton_consejo.place(relx=0.5, rely=0.8, anchor="center")
         except Exception as e:
             showerror("Error", f"No se pudo completar el análisis: {e}")
+
+    def verificar_y_redirigir(self):
+        """Verifica la conexión a Internet y redirige o muestra un mensaje."""
+        if self.verificar_conexion_internet():
+            self.ventana_consejo()  # Redirigir a la siguiente ventana
+        else:
+            messagebox.showwarning(
+                "Sin conexión a Internet",
+                "No hay conexión a Internet. Inténtalo de nuevo más tarde.",
+            )
 
     def mostrar_categoria(self, categoria, datos, grafico, posicion, ancho, alto):
         """Muestra una categoría con su frame y labels correspondientes."""
@@ -417,143 +468,170 @@ class VentanaPrincipal:
         self.texto_respuesta.config(state="disabled")
 
     def mostrar_predicciones(self):
-        self.limpiar_contenedor()
+     self.limpiar_contenedor()
 
-        try:
-            # Crear un Canvas y un Scrollbar
-            canvas = tk.Canvas(self.contenedor)
-            scrollbar = tb.Scrollbar(self.contenedor, orient="vertical", command=canvas.yview)
-            scrollable_frame = tb.Frame(canvas)
+     try:
+        # Crear un Canvas y un Scrollbar
+        canvas = tk.Canvas(self.contenedor)
+        scrollbar = tb.Scrollbar(self.contenedor, orient="vertical", command=canvas.yview)
+        scrollable_frame = tb.Frame(canvas)
 
-            # Configurar el Canvas para que sea desplazable
-            scrollable_frame.bind(
-                "<Configure>",
-                lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-            )
+        # Configurar el Canvas para que sea desplazable
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
 
-            canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-            canvas.configure(yscrollcommand=scrollbar.set)
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
 
-            # Empaquetar el Canvas y el Scrollbar
-            canvas.pack(side="left", fill="both", expand=True)
-            scrollbar.pack(side="right", fill="y")
+        # Empaquetar el Canvas y el Scrollbar
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
 
-            # Cargar y preparar datos históricos
-            df_procesador, df_ram, df_disco, df_gpu = preparar_datos_historicos()
+        # Cargar y preparar datos históricos
+        df_procesador, df_ram, df_disco, df_gpu = preparar_datos_historicos()
 
-            # Verificar que existan datos suficientes para las predicciones
-            if df_ram.empty or df_procesador.empty or df_disco.empty:
-                messagebox.showwarning("Advertencia", "No hay suficientes datos para generar predicciones.")
-                self.ventana_inicio()
-                return
+        # Verificar que existan datos suficientes para las predicciones
+        if df_ram.empty or df_procesador.empty or df_disco.empty:
+            messagebox.showwarning("Advertencia", "No hay suficientes datos para generar predicciones.")
+            self.ventana_inicio()
+            return
 
-            # Convertir fechas a datetime
-            df_ram["fecha"] = pd.to_datetime(df_ram["fecha"], errors='coerce')
-            df_procesador["fecha"] = pd.to_datetime(df_procesador["fecha"], errors='coerce')
-            df_disco["fecha"] = pd.to_datetime(df_disco["fecha"], errors='coerce')
+        # Convertir fechas a datetime
+        df_ram["fecha"] = pd.to_datetime(df_ram["fecha"], errors='coerce')
+        df_procesador["fecha"] = pd.to_datetime(df_procesador["fecha"], errors='coerce')
+        df_disco["fecha"] = pd.to_datetime(df_disco["fecha"], errors='coerce')
 
-            # Convertir todos los nombres de columnas a minúsculas
-            df_ram.columns = [col.lower() for col in df_ram.columns]
-            df_procesador.columns = [col.lower() for col in df_procesador.columns]
-            df_disco.columns = [col.lower() for col in df_disco.columns]
+        # Convertir todos los nombres de columnas a minúsculas
+        df_ram.columns = [col.lower() for col in df_ram.columns]
+        df_procesador.columns = [col.lower() for col in df_procesador.columns]
+        df_disco.columns = [col.lower() for col in df_disco.columns]
+
+        # Verificar y renombrar columnas según corresponda
+        if "uso_ram" not in df_ram.columns and "uso de ram (%)" in df_ram.columns:
+            df_ram.rename(columns={"uso de ram (%)": "uso_ram"}, inplace=True)
+        if "uso_cpu" not in df_procesador.columns and "uso del cpu (%)" in df_procesador.columns:
+            df_procesador.rename(columns={"uso del cpu (%)": "uso_cpu"}, inplace=True)
+
+        # Preparar series temporales para ARIMA
+        serie_ram = df_ram.set_index("fecha")["uso_ram"]
+        serie_procesador = df_procesador.set_index("fecha")["uso_cpu"]
+        serie_disco = df_disco.set_index("fecha")["uso_disco"]
+
+        # Entrenar modelos ARIMA
+        modelo_ram = entrenar_modelo_arima(serie_ram, orden=(1, 1, 1))  # Ajusta (p, d, q) según sea necesario
+        modelo_procesador = entrenar_modelo_arima(serie_procesador, orden=(1, 1, 1))
+        modelo_disco = entrenar_modelo_arima(serie_disco, orden=(1, 1, 1))
+
+        # Hacer predicciones futuras
+        predicciones_ram = hacer_predicciones_arima(modelo_ram, pasos_futuros=6)
+        predicciones_procesador = hacer_predicciones_arima(modelo_procesador, pasos_futuros=6)
+        predicciones_disco = hacer_predicciones_arima(modelo_disco, pasos_futuros=6)
+
+        # Crear DataFrames para las predicciones
+        df_ram_pred = pd.DataFrame({
+            "fecha": pd.date_range(start=serie_ram.index[-1] + pd.Timedelta(days=1), periods=6),
+            "uso_ram": predicciones_ram
+        })
+        df_procesador_pred = pd.DataFrame({
+            "fecha": pd.date_range(start=serie_procesador.index[-1] + pd.Timedelta(days=1), periods=6),
+            "uso_cpu": predicciones_procesador
+        })
+        df_disco_pred = pd.DataFrame({
+            "fecha": pd.date_range(start=serie_disco.index[-1] + pd.Timedelta(days=1), periods=6),
+            "uso_disco": predicciones_disco
+        })
+
+        # Títulos y estilos
+        label_titulo = tb.Label(
+            scrollable_frame,
+            text="Predicciones de Rendimiento",
+            **ESTILO_LABEL_TITULO,
+        )
+        label_titulo.pack(pady=20, fill="x", anchor="center")
+
+        # Frame para los gráficos en 2 columnas
+        frame_graficos = tb.Frame(scrollable_frame)
+        frame_graficos.pack(fill="both", expand=True, pady=10)
+
+        # Configurar 2 columnas con espaciado
+        frame_graficos.columnconfigure(0, weight=1, pad=15)
+        frame_graficos.columnconfigure(1, weight=1, pad=15)
+
+        # Lista de gráficos a generar
+        graficos = [
+            (serie_ram, predicciones_ram, "Uso de RAM (%)"),
+            (serie_procesador, predicciones_procesador, "Uso del Procesador (%)"),
+            (serie_disco, predicciones_disco, "Uso del Disco (%)")
+        ]
+
+        # Verificar si hay datos de GPU
+        if not df_gpu.empty:
+            # Convertir fechas a datetime y nombres de columnas a minúsculas
+            df_gpu["fecha"] = pd.to_datetime(df_gpu["fecha"], errors='coerce')
+            df_gpu.columns = [col.lower() for col in df_gpu.columns]
 
             # Verificar y renombrar columnas según corresponda
-            if "uso_ram" not in df_ram.columns and "uso de ram (%)" in df_ram.columns:
-                df_ram.rename(columns={"uso de ram (%)": "uso_ram"}, inplace=True)
-            if "uso_cpu" not in df_procesador.columns and "uso del cpu (%)" in df_procesador.columns:
-                df_procesador.rename(columns={"uso del cpu (%)": "uso_cpu"}, inplace=True)
+            if "uso_gpu" not in df_gpu.columns and "uso de gpu (%)" in df_gpu.columns:
+                df_gpu.rename(columns={"uso de gpu (%)": "uso_gpu"}, inplace=True)
 
-            # Preparar series temporales para ARIMA
-            serie_ram = df_ram.set_index("fecha")["uso_ram"]
-            serie_procesador = df_procesador.set_index("fecha")["uso_cpu"]
-            serie_disco = df_disco.set_index("fecha")["uso_disco"]
+            # Preparar serie temporal para ARIMA
+            serie_gpu = df_gpu.set_index("fecha")["uso_gpu"]
 
-            # Entrenar modelos ARIMA
-            modelo_ram = entrenar_modelo_arima(serie_ram, orden=(1, 1, 1))  # Ajusta (p, d, q) según sea necesario
-            modelo_procesador = entrenar_modelo_arima(serie_procesador, orden=(1, 1, 1))
-            modelo_disco = entrenar_modelo_arima(serie_disco, orden=(1, 1, 1))
+            # Entrenar modelo ARIMA para GPU
+            modelo_gpu = entrenar_modelo_arima(serie_gpu, orden=(1, 1, 1))
 
-            # Hacer predicciones futuras
-            predicciones_ram = hacer_predicciones_arima(modelo_ram, pasos_futuros=6)
-            predicciones_procesador = hacer_predicciones_arima(modelo_procesador, pasos_futuros=6)
-            predicciones_disco = hacer_predicciones_arima(modelo_disco, pasos_futuros=6)
+            # Hacer predicciones futuras para GPU
+            predicciones_gpu = hacer_predicciones_arima(modelo_gpu, pasos_futuros=6)
 
-            # Crear DataFrames para las predicciones
-            df_ram_pred = pd.DataFrame({
-                "fecha": pd.date_range(start=serie_ram.index[-1] + pd.Timedelta(days=1), periods=6),
-                "uso_ram": predicciones_ram
-            })
-            df_procesador_pred = pd.DataFrame({
-                "fecha": pd.date_range(start=serie_procesador.index[-1] + pd.Timedelta(days=1), periods=6),
-                "uso_cpu": predicciones_procesador
-            })
-            df_disco_pred = pd.DataFrame({
-                "fecha": pd.date_range(start=serie_disco.index[-1] + pd.Timedelta(days=1), periods=6),
-                "uso_disco": predicciones_disco
-            })
+            # Agregar gráfico de GPU a la lista
+            graficos.append((serie_gpu, predicciones_gpu, "Uso de GPU (%)"))
 
-            # Títulos y estilos
-            label_titulo = tb.Label(
-                scrollable_frame,
-                text="Predicciones de Rendimiento",
-                **ESTILO_LABEL_TITULO,
-            )
-            label_titulo.pack(pady=20, fill="x", anchor="center")
+        # Generar gráficos en grid dinámico
+        for i, (serie, pred, titulo) in enumerate(graficos):
+            row = i // 2  # Dos gráficos por fila
+            col = i % 2
 
-            # Frame para los gráficos en 2 columnas
-            frame_graficos = tb.Frame(scrollable_frame)
-            frame_graficos.pack(fill="both", expand=True, pady=10)
+            # Frame contenedor para cada gráfico con borde
+            contenedor_grafico = tb.Frame(frame_graficos, relief='groove', borderwidth=2)
+            contenedor_grafico.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
 
-            # Configurar 2 columnas con espaciado
-            frame_graficos.columnconfigure(0, weight=1, pad=15)
-            frame_graficos.columnconfigure(1, weight=1, pad=15)
+            # Generar gráfico
+            interpretacion = crear_grafico_arima(serie, pred, titulo, contenedor_grafico)
 
-            # Lista de gráficos a generar
-            graficos = [
-                (serie_ram, predicciones_ram, "Uso de RAM (%)"),
-                (serie_procesador, predicciones_procesador, "Uso del Procesador (%)"),
-                (serie_disco, predicciones_disco, "Uso del Disco (%)")
-            ]
-
-            interpretacion_completa = "--- Predicciones de Rendimiento ---\n\n"
-
-            # Generar gráficos en grid dinámico
-            for i, (serie, pred, titulo) in enumerate(graficos):
-                row = i // 2  # Dos gráficos por fila
-                col = i % 2
-
-                # Frame contenedor para cada gráfico con borde
-                contenedor_grafico = tb.Frame(frame_graficos, relief='groove', borderwidth=2)
-                contenedor_grafico.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
-
-                # Generar gráfico
-                interpretacion = crear_grafico_arima(serie, pred, titulo, contenedor_grafico)
-                interpretacion_completa += f"{titulo}:\n{interpretacion}\n\n"
-
-            # Área de texto desplazable para interpretación
-            texto_interpretacion = ScrolledText(scrollable_frame, wrap="word", height=10, width=90, state="normal")
-            texto_interpretacion.insert(tk.END, interpretacion_completa)
+            # Crear un ScrolledText para la interpretación
+            texto_interpretacion = ScrolledText(contenedor_grafico, wrap="word", height=5, width=50, state="normal")
+            texto_interpretacion.insert(tk.END, f"{titulo}:\n{interpretacion}")
             texto_interpretacion.config(state="disabled")
             texto_interpretacion.pack(pady=10, fill="x", padx=10)
 
-            # Botón para regresar al análisis
-            boton_venanalizar = tb.Button(
-                self.contenedor,
-                text="Volver al Inicio",
-                command=self.ventana_inicio,
-                style="Primary.TButton",
-            )
-            boton_venanalizar.place(relx=0.0, rely=0.9, anchor="w")
+        # Si no hay datos de GPU, mostrar un mensaje en lugar del gráfico
+        if df_gpu.empty:
+            row = len(graficos) // 2  # Calcular la fila correspondiente
+            col = len(graficos) % 2
 
-            # Centrar el contenido en el scrollable_frame
-            scrollable_frame.update_idletasks()
-            canvas.config(scrollregion=canvas.bbox("all"))
+            # Frame contenedor para el mensaje de GPU no disponible
+            contenedor_mensaje = tb.Frame(frame_graficos, relief='groove', borderwidth=2)
+            contenedor_mensaje.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
 
-            # Centrar el contenido horizontalmente
-            canvas_width = canvas.winfo_width()
-            frame_width = scrollable_frame.winfo_width()
-            if frame_width < canvas_width:
-                canvas.create_window((canvas_width // 2, 0), window=scrollable_frame, anchor="n")
+            # Mostrar mensaje de GPU no disponible
+            label_mensaje = tb.Label(contenedor_mensaje, text="GPU no disponible", **ESTILO_LABEL_TITULO)
+            label_mensaje.pack(pady=20, fill="both", expand=True)
 
-        except Exception as e:
-            messagebox.showerror("Error", f"Error al generar predicciones: {e}")
+
+            self._crear_botones_navegacion()
+        
+
+        # Centrar el contenido en el scrollable_frame
+        scrollable_frame.update_idletasks()
+        canvas.config(scrollregion=canvas.bbox("all"))
+
+        # Centrar el contenido horizontalmente
+        canvas_width = canvas.winfo_width()
+        frame_width = scrollable_frame.winfo_width()
+        if frame_width < canvas_width:
+            canvas.create_window((canvas_width // 1.7, 0), window=scrollable_frame, anchor="n")
+
+     except Exception as e:
+        messagebox.showerror("Error", f"Error al generar predicciones: {e}")
