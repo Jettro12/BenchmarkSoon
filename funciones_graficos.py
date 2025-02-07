@@ -13,17 +13,17 @@ def crear_grafico_cpu(info):
     sns.barplot(x=labels, y=values, hue=labels, palette="viridis", ax=ax, dodge=False, legend=False)
     
     # Ajustar el tamaño del texto de las etiquetas y títulos
-    ax.set_title("Rendimiento del CPU", fontsize=9, color='white')  # Tamaño de la fuente ajustado y color blanco
-    ax.set_ylabel("GHz", fontsize=7, color='white')  # Tamaño de la fuente ajustado y color blanco
-    ax.set_xlabel("", fontsize=7, color='white')  # Color blanco para las etiquetas del eje x
+    ax.set_title("Rendimiento del CPU", fontsize=9, color='black')  # Tamaño de la fuente ajustado y color blanco
+    ax.set_ylabel("GHz", fontsize=7, color='black')  # Tamaño de la fuente ajustado y color blanco
+    ax.set_xlabel("", fontsize=7, color='black')  # Color blanco para las etiquetas del eje x
     
     # Ajustar el tamaño y color de las etiquetas del eje
-    ax.tick_params(axis='x', colors='white', labelsize=6)  # Tamaño ajustado y color blanco
-    ax.tick_params(axis='y', colors='white', labelsize=6)  # Tamaño ajustado y color blanco
+    ax.tick_params(axis='x', colors='black', labelsize=6)  # Tamaño ajustado y color blanco
+    ax.tick_params(axis='y', colors='black', labelsize=6)  # Tamaño ajustado y color blanco
 
 # Cambiar el color de los bordes de los ejes a blanco
     for spine in ax.spines.values():
-        spine.set_edgecolor('white')
+        spine.set_edgecolor('black')
 
     # Eliminar el fondo blanco
     fig.patch.set_alpha(0.0)
@@ -43,13 +43,13 @@ def crear_grafico_ram(info):
         startangle=90,
         colors=colors,
         wedgeprops={'width': 0.4},
-        textprops={'color': 'white'}  # Color de las etiquetas
+        textprops={'color': 'black'}  # Color de las etiquetas
     )
     for text in texts:
-        text.set_color('white')
+        text.set_color('black')
     for autotext in autotexts:
-        autotext.set_color('white')
-    ax.set_title("Uso de RAM (Dona)", fontsize=9, color='white')  # Tamaño de la fuente ajustado y color blanco
+        autotext.set_color('black')
+    ax.set_title("Uso de RAM (Dona)", fontsize=9, color='black')  # Tamaño de la fuente ajustado y color blanco
 
     # Eliminar el fondo blanco
     fig.patch.set_alpha(0.0)
@@ -69,13 +69,13 @@ def crear_grafico_disco(info):
         startangle=90,
         colors=colors,
         wedgeprops={'width': 0.4},
-        textprops={'color': 'white'}  # Color de las etiquetas
+        textprops={'color': 'black'}  # Color de las etiquetas
     )
     for text in texts:
-        text.set_color('white')
+        text.set_color('black')
     for autotext in autotexts:
-        autotext.set_color('white')
-    ax.set_title("Espacio en Disco (Dona)", fontsize=9, color='white')  # Tamaño de la fuente ajustado y color blanco
+        autotext.set_color('black')
+    ax.set_title("Espacio en Disco (Dona)", fontsize=9, color='black')  # Tamaño de la fuente ajustado y color blanco
 
     # Eliminar el fondo blanco
     fig.patch.set_alpha(0.0)
@@ -95,8 +95,8 @@ def crear_grafico_gpu(info):
     ax.plot(angles, values, color='blue', linewidth=2)
     ax.set_yticklabels([])
     ax.set_xticks(angles[:-1])
-    ax.set_xticklabels(labels, fontsize=7, color='white')  # Tamaño de la fuente ajustado y color blanco
-    ax.set_title("Uso de GPU", fontsize=9, color='white')  # Tamaño de la fuente ajustado y color blanco
+    ax.set_xticklabels(labels, fontsize=7, color='black')  # Tamaño de la fuente ajustado y color blanco
+    ax.set_title("Uso de GPU", fontsize=9, color='black')  # Tamaño de la fuente ajustado y color blanco
 
     # Eliminar el fondo blanco
     fig.patch.set_alpha(0.0)

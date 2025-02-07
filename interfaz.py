@@ -22,7 +22,9 @@ from configuraciones import (
     ESTILO_LABEL_TEXTO,
     #ESTILO_TEXTO_CONSEJO,
     #ESTILO_LABEL_CATEGORIA,
-    ESTILO_LABEL_PROMPTPERSONAL
+    ESTILO_LABEL_PROMPTPERSONAL,
+    ESTILO_LABEL_TEXTO1,
+    ESTILO_FRAMES,
 )
 from funciones_graficos import (
     crear_grafico_cpu,
@@ -44,13 +46,14 @@ hacer_predicciones_arima
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import markdown
 from tkhtmlview import HTMLLabel
+import webbrowser
 
 class VentanaPrincipal:
     def __init__(self, root):
         self.root = root
         self.root.title("Athen-IA")
         # Configuración inicial con ttkbootstrap
-        self.style = tb.Style("vapor")  # Cambia el tema aquí según tus preferencias
+        self.style = tb.Style()  # Cambia el tema aquí según tus preferencias
         pantalla_ancho = self.root.winfo_screenwidth()
         pantalla_alto = self.root.winfo_screenheight()
         self.root.geometry(f"{pantalla_ancho}x{pantalla_alto}")
@@ -87,16 +90,23 @@ class VentanaPrincipal:
             command=self.ventana_inicio,
             style="Primary.TButton",
         )
+        boton_sobre_nosotros = tb.Button(
+             self.contenedor,
+             text="Sobre Nosotros",
+             style="Primary.TButton",
+             command=self.ventana_sobre_nosotros,
+         )
 
         boton_salir = tb.Button(
          self.contenedor,
          text="Salir",
          command=self.root.quit,
-          style="Primary.TButton",
+          style="Secondary.TButton",
         )
  
         boton_inicio.place(relx=0.0, rely=0.2, anchor="w")
         boton_Prediccion.place(relx=0.0, rely=0.4, anchor="w")
+        boton_sobre_nosotros.place(relx=0.0, rely=0.6, anchor="w")
         boton_salir.place(relx=0.0, rely=0.8, anchor="w")
 
     def ventana_inicio(self):
@@ -105,7 +115,7 @@ class VentanaPrincipal:
 
         # Fondo de imagen
         try:
-            fondo = Image.open("Media/modelo1.png").resize((576, 768), Image.LANCZOS)
+            fondo = Image.open("BenchmarkSoon/Media/modelo1.png").resize((576, 768), Image.LANCZOS)
             fondo_tk = ImageTk.PhotoImage(fondo)
 
             self.root.update()
@@ -163,7 +173,7 @@ class VentanaPrincipal:
             # Almacenar los datos en la base de datos al presionar "Analizar"
             almacenar_datos(self.info_procesador, self.info_ram, self.info_disco, self.info_gpu)
            
-            fondo = Image.open("Media/modelo2.png").resize((576, 768), Image.LANCZOS)
+            fondo = Image.open("BenchmarkSoon/Media/modelo2.png").resize((576, 768), Image.LANCZOS)
             fondo_tk = ImageTk.PhotoImage(fondo)
 
             ventana_ancho = self.root.winfo_width()
@@ -181,9 +191,9 @@ class VentanaPrincipal:
                 categoria="Frecuencias CPU",
                 datos=self.info_procesador,
                 grafico=fig1,
-                posicion=(86, 15),
-                ancho=411   ,
-                alto=370,
+                posicion=(50, 15),
+                ancho=470,
+                alto=390,
             )
 
             # Configuración para el frame de la RAM
@@ -192,9 +202,9 @@ class VentanaPrincipal:
                 categoria="RAM",
                 datos=self.info_ram,
                 grafico=fig3,
-                posicion=(973, 15),
-                ancho=200,
-                alto=280,
+                posicion=(1050, 60),
+                ancho=290,
+                alto=310,
             )
 
             # Configuración para el frame del Disco
@@ -203,9 +213,9 @@ class VentanaPrincipal:
                 categoria="Disco",
                 datos=self.info_disco,
                 grafico=fig4,
-                posicion=(973, 405),
-                ancho=200,
-                alto=280,
+                posicion=(1000, 420),
+                ancho=290,
+                alto=310,
             )
 
             # Configuración para el frame de la GPU
@@ -224,9 +234,9 @@ class VentanaPrincipal:
                     categoria="GPU",
                     datos=self.info_gpu,
                     grafico=fig5,
-                    posicion=(30, 405),
+                    posicion=(80, 430),
                     ancho=470,
-                    alto=280,
+                    alto=300,
                 )
 
 
@@ -244,7 +254,7 @@ class VentanaPrincipal:
              self.contenedor,
              text="Regresar",
              command=self.ventana_inicio,
-             style="Secundary.TButton",
+             style="Secondary.TButton",
             )
             boton_regresar.place(relx=0.95, rely=0.89, anchor="e")
             boton_consejo.place(relx=0.5, rely=0.8, anchor="center")
@@ -270,7 +280,7 @@ class VentanaPrincipal:
             self.contenedor,
             text=categoria,
             padding=10,
-            bootstyle="secondary",
+            **ESTILO_FRAMES,
         )
         frame_categoria.place(x=x, y=y, width=ancho, height=alto)
 
@@ -372,7 +382,7 @@ class VentanaPrincipal:
             padding=9,
             bootstyle="secondary"
         )
-        frame_chat.pack(fill=BOTH, expand=True, padx=6, pady=10)
+        frame_chat.pack(fill=BOTH, expand=True, padx=3, pady=5)
 
         # Pregunta inicial
         label_pregunta = tb.Label(
@@ -648,3 +658,103 @@ class VentanaPrincipal:
 
      except Exception as e:
         messagebox.showerror("Error", f"Error al generar predicciones: {e}")
+
+    def ventana_sobre_nosotros(self):
+        self.limpiar_contenedor()
+        
+        label_titulo = tb.Label(
+            self.contenedor,
+            text="Sobre Nosotros",
+            **ESTILO_LABEL_TITULO,
+        )
+        label_titulo.pack(pady=10)
+        
+        frame_Progra1 = tb.Labelframe(
+            self.contenedor,
+            text="Erick290211",
+            padding=10,
+            **ESTILO_FRAMES,
+        )
+        frame_Progra1.place(x=250, y=50, width=320, height=320)
+
+        # Descripción de Erick
+        label_descripcion1 = tb.Label(
+            frame_Progra1,
+            text="Si deseas saber mas acerca de Erick, acontinucacion te dejamos su link de su Github, para que le vayas a echar un visstazo.",
+            **ESTILO_LABEL_TEXTO1,
+        )
+        label_descripcion1.pack(pady=10)
+
+        label_redes1 = tb.Label(
+            frame_Progra1,
+            text="GitHUb",
+            font=("Arial", 14, "bold"),
+            anchor="center",
+            cursor="hand2",
+        )
+        label_redes1.pack()
+        label_redes1.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/Erick290911"))
+        
+        frame_Progra2 = tb.Labelframe(
+            self.contenedor,
+            text="Jettro12",
+            padding=10,
+            **ESTILO_FRAMES,
+        )
+        frame_Progra2.place(x=900, y=50, width=320, height=320)
+
+        # Descripción de Jair
+        label_descripcion2 = tb.Label(
+            frame_Progra2,
+            text="Si deseas saber mas acerca de Jair, acontinucacion te dejamos su link de su Github, para que le vayas a echar un visstazo.",
+            **ESTILO_LABEL_TEXTO1,
+        )
+        label_descripcion2.pack(pady=10)
+
+        label_redes2 = tb.Label(
+            frame_Progra2,
+            text="GitHUb",
+            font=("Arial", 14, "bold"),
+            anchor="center",
+            cursor="hand2",
+        )
+        label_redes2.pack()
+        label_redes2.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/Jettro12"))
+
+        frame_Progra3 = tb.Labelframe(
+            self.contenedor,
+            text="CupidoRam",
+            padding=10,
+            **ESTILO_FRAMES,
+        )
+        frame_Progra3.place(x=580, y=400, width=320, height=320)
+
+        # Descripción de Ramses
+        label_descripcion3 = tb.Label(
+            frame_Progra3,
+            text="Si deseas saber mas acerca de Ramses, acontinucacion te dejamos su link de su Github, para que le vayas a echar un visstazo.",
+            **ESTILO_LABEL_TEXTO1,
+        )
+        label_descripcion3.pack(pady=10)
+
+        label_redes3 = tb.Label(
+            frame_Progra3,
+            text="GitHUb",
+            font=("Arial", 14, "bold"),
+            anchor="center",
+            cursor="hand2",
+        )
+        label_redes3.pack()
+        label_redes3.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/RamCupido"))
+
+        boton_repos = tb.Button(
+            self.contenedor,
+            text="Ir al Repositorio",
+            style="Primary.TButton",
+            command=self.repositorio,
+        )
+        boton_repos.place(relx=0.9, rely=0.8, anchor="center")
+        self._crear_botones_navegacion()
+
+    def repositorio (self):
+        webbrowser.open('https://github.com/Jettro12/BenchmarkSoon')
