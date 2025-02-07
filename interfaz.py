@@ -53,7 +53,8 @@ class VentanaPrincipal:
         self.root = root
         self.root.title("Athen-IA")
         # Configuración inicial con ttkbootstrap
-        self.style = tb.Style()  # Cambia el tema aquí según tus preferencias
+        self.style = tb.Style("morph")  # Cambia el tema aquí según tus preferencias
+        
         pantalla_ancho = self.root.winfo_screenwidth()
         pantalla_alto = self.root.winfo_screenheight()
         self.root.geometry(f"{pantalla_ancho}x{pantalla_alto}")
@@ -280,7 +281,7 @@ class VentanaPrincipal:
             self.contenedor,
             text=categoria,
             padding=10,
-            **ESTILO_FRAMES,
+            bootstyle="primary",
         )
         frame_categoria.place(x=x, y=y, width=ancho, height=alto)
 
@@ -380,7 +381,7 @@ class VentanaPrincipal:
             frame_chatbot,
             text="Chatbot de Optimización",
             padding=9,
-            bootstyle="secondary"
+            bootstyle="primary"
         )
         frame_chat.pack(fill=BOTH, expand=True, padx=3, pady=5)
 
@@ -673,7 +674,7 @@ class VentanaPrincipal:
             self.contenedor,
             text="Erick290211",
             padding=10,
-            **ESTILO_FRAMES,
+            bootstyle="primary",
         )
         frame_Progra1.place(x=250, y=50, width=320, height=320)
 
@@ -699,7 +700,7 @@ class VentanaPrincipal:
             self.contenedor,
             text="Jettro12",
             padding=10,
-            **ESTILO_FRAMES,
+            bootstyle="primary",
         )
         frame_Progra2.place(x=900, y=50, width=320, height=320)
 
@@ -725,7 +726,7 @@ class VentanaPrincipal:
             self.contenedor,
             text="CupidoRam",
             padding=10,
-            **ESTILO_FRAMES,
+            bootstyle="primary",
         )
         frame_Progra3.place(x=580, y=400, width=320, height=320)
 
