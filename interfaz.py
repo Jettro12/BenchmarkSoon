@@ -54,15 +54,9 @@ class VentanaPrincipal:
         # Configuración inicial con ttkbootstrap
         self.style = tb.Style("morph")  # Cambia el tema aquí según tus preferencias
         
-=======
-        self.style = tb.Style(theme="yeti")  # Cambia el tema aquí según tus preferencias
-
         pantalla_ancho = self.root.winfo_screenwidth()
         pantalla_alto = self.root.winfo_screenheight()
-        # Configurar la ventana para que ocupe toda la pantalla
-        self.root.geometry(f"{pantalla_ancho}x{pantalla_alto}+0+0")
-        self.root.attributes('-fullscreen', False)  # Esto pone la ventana en pantalla completa
-            
+        self.root.geometry(f"{pantalla_ancho}x{pantalla_alto}")
         # Crear las tablas si no existen
         crear_base_de_datos()
         # Configurar estilos personalizados
