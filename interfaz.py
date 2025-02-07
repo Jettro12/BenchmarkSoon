@@ -41,7 +41,6 @@ from BD import (
 from modelo import (
 entrenar_modelo_arima,
 hacer_predicciones_arima
-
 )
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import markdown
@@ -55,10 +54,15 @@ class VentanaPrincipal:
         # Configuración inicial con ttkbootstrap
         self.style = tb.Style("morph")  # Cambia el tema aquí según tus preferencias
         
+=======
+        self.style = tb.Style(theme="yeti")  # Cambia el tema aquí según tus preferencias
+
         pantalla_ancho = self.root.winfo_screenwidth()
         pantalla_alto = self.root.winfo_screenheight()
-        self.root.geometry(f"{pantalla_ancho}x{pantalla_alto}")
-        
+        # Configurar la ventana para que ocupe toda la pantalla
+        self.root.geometry(f"{pantalla_ancho}x{pantalla_alto}+0+0")
+        self.root.attributes('-fullscreen', False)  # Esto pone la ventana en pantalla completa
+            
         # Crear las tablas si no existen
         crear_base_de_datos()
         # Configurar estilos personalizados
@@ -79,36 +83,40 @@ class VentanaPrincipal:
 
     def _crear_botones_navegacion(self):
         """Crea y posiciona los botones de navegación comunes."""
+        #Frame para los botones
+        frame_botones = tb.Frame(self.contenedor, width=300, height=810)
+        frame_botones.place(relx=0, rely=0.45, anchor="w")
+
         boton_Prediccion = tb.Button(
-            self.contenedor,
+            frame_botones,
             text="Predicciones",
             command=self.mostrar_predicciones,
             style="Primary.TButton",
         )
         boton_inicio = tb.Button(
-            self.contenedor,
+            frame_botones,
             text="Inicio",
             command=self.ventana_inicio,
             style="Primary.TButton",
         )
         boton_sobre_nosotros = tb.Button(
-             self.contenedor,
+             frame_botones,
              text="Sobre Nosotros",
              style="Primary.TButton",
              command=self.ventana_sobre_nosotros,
          )
 
         boton_salir = tb.Button(
-         self.contenedor,
+         frame_botones,
          text="Salir",
          command=self.root.quit,
           style="Secondary.TButton",
         )
  
-        boton_inicio.place(relx=0.0, rely=0.2, anchor="w")
-        boton_Prediccion.place(relx=0.0, rely=0.4, anchor="w")
-        boton_sobre_nosotros.place(relx=0.0, rely=0.6, anchor="w")
-        boton_salir.place(relx=0.0, rely=0.8, anchor="w")
+        boton_inicio.place(relx=0.2, rely=0.2, anchor="w")
+        boton_Prediccion.place(relx=0.2, rely=0.4, anchor="w")
+        boton_sobre_nosotros.place(relx=0.2, rely=0.6, anchor="w")
+        boton_salir.place(relx=0.2, rely=0.8, anchor="w")
 
     def ventana_inicio(self):
         """Muestra la pantalla de inicio."""
@@ -305,7 +313,7 @@ class VentanaPrincipal:
 
         # Frame principal para dividir la ventana en dos partes
         frame_principal = tb.Frame(self.contenedor)
-        frame_principal.pack(fill=BOTH, expand=True, padx=10, pady=10)
+        frame_principal.pack(fill=BOTH, expand=True, padx=0.8, pady=0.8)
 
         # Configurar el grid en el frame principal
         frame_principal.grid_rowconfigure(0, weight=1)  # Fila 0 ocupa todo el espacio vertical
@@ -315,11 +323,11 @@ class VentanaPrincipal:
 
         # Frame para el lado izquierdo (consejo)
         frame_izquierdo = tb.Frame(frame_principal)
-        frame_izquierdo.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+        frame_izquierdo.grid(row=0, column=0, sticky="nsew", padx=0.8, pady=0.8)
 
         # Frame para el lado derecho (chatbot)
         frame_derecho = tb.Frame(frame_principal)
-        frame_derecho.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
+        frame_derecho.grid(row=0, column=1, sticky="nsew", padx=0.8, pady=0.8)
 
         try:
             # Generar el prompt y obtener el consejo
@@ -355,7 +363,7 @@ class VentanaPrincipal:
 
         # Frame para los botones de volver y salir en la parte inferior
         frame_botones = tb.Frame(self.contenedor)
-        frame_botones.pack(fill=X, padx=10, pady=10)
+        frame_botones.pack(fill=BOTH, padx=10, pady=10)
 
         # Aplicar estilo secundario al botón "Volver al inicio"
         boton_volver = tb.Button(
@@ -676,7 +684,7 @@ class VentanaPrincipal:
             padding=10,
             bootstyle="primary",
         )
-        frame_Progra1.place(x=250, y=50, width=320, height=320)
+        frame_Progra1.place(x=350, y=50, width=320, height=320)
 
         # Descripción de Erick
         label_descripcion1 = tb.Label(
@@ -702,7 +710,7 @@ class VentanaPrincipal:
             padding=10,
             bootstyle="primary",
         )
-        frame_Progra2.place(x=900, y=50, width=320, height=320)
+        frame_Progra2.place(x=1000, y=50, width=320, height=320)
 
         # Descripción de Jair
         label_descripcion2 = tb.Label(
@@ -728,7 +736,7 @@ class VentanaPrincipal:
             padding=10,
             bootstyle="primary",
         )
-        frame_Progra3.place(x=580, y=400, width=320, height=320)
+        frame_Progra3.place(x=680, y=400, width=320, height=320)
 
         # Descripción de Ramses
         label_descripcion3 = tb.Label(
