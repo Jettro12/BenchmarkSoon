@@ -1,13 +1,13 @@
 import os
 from dotenv import load_dotenv
-import google.generativeai as genai
+import groq
 
 # Cargar las variables desde el archivo .env
 load_dotenv()
 # Configuración de la API Key
 api_key = os.getenv("API_KEY")
-genai.configure(api_key=api_key)
-model = genai.GenerativeModel("gemini-2.0-flash-exp")
+client=groq.Client(api_key=api_key)
+model = "llama-3.3-70b-versatile"
 
 # Estilo para los botones de inicio y análisis
 ESTILO_BOTON_PRIMARIO = {
