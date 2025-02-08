@@ -48,6 +48,8 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import markdown
 from tkhtmlview import HTMLLabel
 import webbrowser
+import matplotlib.pyplot as plt
+
 
 class VentanaPrincipal:
     def __init__(self, root):
@@ -210,43 +212,45 @@ class VentanaPrincipal:
             print("Error: Los frames de las categorías no se han creado correctamente.")
             return
 
-        # Actualizar gráficos y datos
-        self.actualizar_grafico("Uso del CPU (%)", self.info_procesador, crear_grafico_cpu(self.info_procesador))
-        self.actualizar_grafico("RAM", self.info_ram, crear_grafico_ram(self.info_ram))
-        self.actualizar_grafico("Disco", self.info_disco, crear_grafico_disco(self.info_disco))
+    # Actualizar gráficos
+        if hasattr(self, "ax_cpu"):
+            crear_grafico_cpu(self.info_procesador, self.ax_cpu)
+            self.canvas_cpu.draw()
 
-        if "No disponible" in self.info_gpu.values():
-            self.actualizar_grafico("GPU", {"GPU": "No se detectó ninguna GPU en este sistema"}, crear_grafico_gpu(self.info_gpu))
-        else:
-            self.actualizar_grafico("GPU", self.info_gpu, crear_grafico_gpu(self.info_gpu))
+        if hasattr(self, "ax_ram"):
+            crear_grafico_ram(self.info_ram, self.ax_ram)
+            self.canvas_ram.draw()
+
+        if hasattr(self, "ax_disco"):
+            crear_grafico_disco(self.info_disco, self.ax_disco)
+            self.canvas_disco.draw()
+
+        if hasattr(self, "ax_gpu"):
+            if "No disponible" in self.info_gpu.values():
+                crear_grafico_gpu({"GPU": "No se detectó ninguna GPU en este sistema"}, self.ax_gpu)
+            else:
+                crear_grafico_gpu(self.info_gpu, self.ax_gpu)
+            self.canvas_gpu.draw()
+
+            # Actualizar las etiquetas con las especificaciones
+        self.label_cpu.config(
+            text=f"Nombre: {self.info_procesador.get('Nombre', 'CPU')}\nUso: {self.info_procesador.get('Uso del CPU (%)', 0)}%"
+        )
+        self.label_ram.config(
+            text=f"RAM\nUso: {self.info_ram.get('Uso de RAM (%)', 0)}%"
+        )
+        self.label_disco.config(
+            text=f"Disco\nUso: {self.info_disco.get('Uso de Disco (%)', 0)}%"
+        )
+        self.label_gpu.config(
+            text=f"Nombre: {self.info_gpu.get('Nombre', 'GPU')}\nUso: {self.info_gpu.get('Carga (%)', 0)}%"
+        )
 
         # Volver a ejecutar la función después de 2000ms (2 segundos)
         self.root.after(2000, self.actualizar_datos)
 
      except Exception as e:
         messagebox.showerror("Error", f"No se pudo actualizar los datos: {e}")
-
-    def actualizar_grafico(self, categoria, datos, grafico):
-        """Actualiza el gráfico y los datos en el frame correspondiente."""
-        frame = self.frames_categorias[categoria]
-
-        # Limpiar solo los widgets de datos y gráficos, no el frame completo
-        for widget in frame.winfo_children():
-            if widget not in [self.canvas_graficos.get(categoria)]:  # Evitar destruir el canvas del gráfico
-                widget.destroy()
-
-        # Mostrar los datos en el frame
-        label_datos = tk.Label(frame, text=str(datos))
-        label_datos.pack()
-
-        # Actualizar el gráfico
-        if categoria in self.canvas_graficos:
-            self.canvas_graficos[categoria].get_tk_widget().destroy()  # Eliminar el canvas anterior
-
-        canvas = FigureCanvasTkAgg(grafico, master=frame)
-        canvas.draw()
-        canvas.get_tk_widget().pack(fill="both", expand=True)
-        self.canvas_graficos[categoria] = canvas  # Guardar el nuevo canvas
 
 
     def ventana_analisis(self):
@@ -276,9 +280,63 @@ class VentanaPrincipal:
 
         # Posicionar los frames
         self.frames_categorias["Uso del CPU (%)"].place(x=50, y=15)
-        self.frames_categorias["RAM"].place(x=900, y=60)
-        self.frames_categorias["Disco"].place(x=900, y=420)
-        self.frames_categorias["GPU"].place(x=80, y=430)
+        self.frames_categorias["RAM"].place(x=1100, y=15)
+        self.frames_categorias["Disco"].place(x=1100, y=430)
+        self.frames_categorias["GPU"].place(x=50, y=430)
+
+        # Inicializar gráficos
+        self.fig_cpu, self.ax_cpu = plt.subplots(figsize=(4, 2))
+        self.canvas_cpu = FigureCanvasTkAgg(self.fig_cpu, master=self.frames_categorias["Uso del CPU (%)"])
+        self.canvas_cpu.get_tk_widget().pack(fill="both", expand=True)
+
+        self.fig_ram, self.ax_ram = plt.subplots(figsize=(3, 2))
+        self.canvas_ram = FigureCanvasTkAgg(self.fig_ram, master=self.frames_categorias["RAM"])
+        self.canvas_ram.get_tk_widget().pack(fill="both", expand=True)
+
+        self.fig_disco, self.ax_disco = plt.subplots(figsize=(3, 2))
+        self.canvas_disco = FigureCanvasTkAgg(self.fig_disco, master=self.frames_categorias["Disco"])
+        self.canvas_disco.get_tk_widget().pack(fill="both", expand=True)
+
+        self.fig_gpu, self.ax_gpu = plt.subplots(figsize=(3, 2))
+        self.canvas_gpu = FigureCanvasTkAgg(self.fig_gpu, master=self.frames_categorias["GPU"])
+        self.canvas_gpu.get_tk_widget().pack(fill="both", expand=True)
+
+        # Etiquetas para mostrar las especificaciones encima de los gráficos
+        self.label_cpu = tb.Label(
+            self.frames_categorias["Uso del CPU (%)"],
+            text="",  # Texto inicial vacío
+            font=("Helvetica", 12, "bold"),
+            foreground="black",  # Texto negro
+            background="",  # Fondo transparente
+        )
+        self.label_cpu.pack(pady=10)
+
+        self.label_ram = tb.Label(
+            self.frames_categorias["RAM"],
+            text="",  # Texto inicial vacío
+            font=("Helvetica", 12, "bold"),
+            foreground="black",  # Texto negro
+            background="",  # Fondo transparente
+        )
+        self.label_ram.pack(pady=10)
+
+        self.label_disco = tb.Label(
+            self.frames_categorias["Disco"],
+            text="",  # Texto inicial vacío
+            font=("Helvetica", 12, "bold"),
+            foreground="black",  # Texto negro
+            background="",  # Fondo transparente
+        )
+        self.label_disco.pack(pady=10)
+
+        self.label_gpu = tb.Label(
+            self.frames_categorias["GPU"],
+            text="",  # Texto inicial vacío
+            font=("Helvetica", 12, "bold"),
+            foreground="black",  # Texto negro
+            background="",  # Fondo transparente
+        )
+        self.label_gpu.pack(pady=10)
 
         # Iniciar actualización de datos
         self.actualizando_datos = True
@@ -316,33 +374,7 @@ class VentanaPrincipal:
                 "No hay conexión a Internet. Inténtalo de nuevo más tarde.",
             )
 
-    def mostrar_categoria(self, categoria, datos, grafico, posicion, ancho, alto):
-        """Muestra una categoría con su frame y labels correspondientes."""
-        x, y = posicion
-
-        # Crear el frame para la categoría
-        frame_categoria = tb.Labelframe(
-            self.contenedor,
-            text=categoria,
-            padding=10,
-            bootstyle="primary",
-        )
-        frame_categoria.place(x=x, y=y, width=ancho, height=alto)
-
-        # Mostrar los datos dentro del frame
-        for clave, valor in datos.items():
-            label = tb.Label(
-                frame_categoria,
-                text=f"{clave}: {valor}",
-                **ESTILO_LABEL_TEXTO,
-            )
-            label.pack(anchor="w")
-
-        # Mostrar gráfico
-        canvas = FigureCanvasTkAgg(grafico, master=frame_categoria)
-        canvas_widget = canvas.get_tk_widget()
-        canvas_widget.pack()
-        canvas.draw()
+    
 
     def ventana_consejo(self):
         self.actualizando_datos = False

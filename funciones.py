@@ -69,7 +69,37 @@ def obtener_info_gpu():
 # Función para generar el prompt personalizado
 def generar_prompt_personalizado(info_procesador, info_ram, info_disco, info_gpu):
     
-    prompt = "Basado en el análisis del sistema, proporciona consejos específicos para optimizar el rendimiento, centrándote solo en las acciones a realizar. Aquí están los puntos clave:\n\n"
+    prompt = """
+        Basado en el análisis del sistema, proporciona consejos específicos para optimizar el rendimiento. 
+        Cada consejo debe incluir:
+
+        1. **Acciones claras y específicas** a realizar, ordenadas por su importancia.
+        2. **Iconos o imágenes a color** que representen visualmente cada consejo (por ejemplo, 🚀 para optimización, 🔧 para ajustes técnicos, 📊 para análisis de datos, etc.).
+        3. **Formato Markdown** para una presentación clara y atractiva, utilizando:
+        - Encabezados (`##`) para cada categoría de consejos.
+        - Listas numeradas o con viñetas (`-` o `1.`) para las acciones.
+        - **Negritas** para resaltar puntos clave.
+        - Código en línea (`` ` ``) para términos técnicos.
+        - Bloques de código (``` ```) para comandos o scripts.
+        - Imágenes o iconos relevantes (usando `![alt text](image_url)`).
+
+        Ejemplo de formato:
+
+        ## 🚀 Optimización del Sistema
+        - **Acción 1:** Limpiar archivos temporales usando el comando `rm -rf /tmp/*`.
+        - **Acción 2:** Deshabilitar servicios innecesarios con `systemctl disable <nombre_servicio>`.
+        - **Acción 3:** Aumentar la memoria swap para mejorar el rendimiento.
+
+        ## 🔧 Ajustes Técnicos
+        - **Acción 1:** Actualizar los controladores de hardware.
+        - **Acción 2:** Optimizar la configuración de la base de datos.
+
+        ## 📊 Análisis de Datos
+        - **Acción 1:** Monitorear el uso de recursos con `htop`.
+        - **Acción 2:** Generar reportes de rendimiento semanales.
+
+        Asegúrate de que cada consejo sea fácil de entender y visualmente atractivo para el usuario.Aquí están los puntos clave:
+        """
     
     # Procesador
     prompt += f"Procesador: Uso del CPU {info_procesador['Uso del CPU (%)']}%.\n"
