@@ -123,7 +123,7 @@ class VentanaPrincipal:
 
         # Fondo de imagen
         try:
-            fondo = Image.open("Media/modelo1.png").resize((576, 768), Image.LANCZOS)
+            fondo = Image.open("BenchmarkSoon/Media/modelo1.png").resize((576, 768), Image.LANCZOS)
             fondo_tk = ImageTk.PhotoImage(fondo)
 
             self.root.update()
@@ -229,7 +229,7 @@ class VentanaPrincipal:
         self.limpiar_contenedor()
 
         # Cargar y mostrar el fondo
-        fondo = Image.open("Media/modelo2.png").resize((576, 768), Image.LANCZOS)
+        fondo = Image.open("BenchmarkSoon/Media/modelo2.png").resize((576, 768), Image.LANCZOS)
         fondo_tk = ImageTk.PhotoImage(fondo)
 
         ventana_ancho = self.root.winfo_width()

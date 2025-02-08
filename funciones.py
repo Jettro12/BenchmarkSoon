@@ -2,7 +2,7 @@ import psutil
 import platform
 import GPUtil
 import cpuinfo
-from configuraciones import model
+from configuraciones import model, client
 
 # Función para obtener información del procesador
 def obtener_info_procesador():
@@ -86,11 +86,14 @@ def generar_prompt_personalizado(info_procesador, info_ram, info_disco, info_gpu
     prompt += "Proporciona acciones específicas para optimizar este sistema."
     return prompt
 
-# Función para obtener consejo de la IA utilizando Gemini
+# Función para obtener consejo de la IA utilizando Groq
 def obtener_consejo_ia(prompt):
     try:
-        # Llamada al modelo de Gemini con el prompt
-        response = model.generate_content(prompt)
-        return response.text
+        # Llamada al modelo de Groq con el prompt
+        response = client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return response.choices[0].message.content
     except Exception as e:
         return f"Error al generar el consejo: {e}"
