@@ -7,17 +7,11 @@ from configuraciones import model
 # Función para obtener información del procesador
 def obtener_info_procesador():
     cpu_info = cpuinfo.get_cpu_info()
-    cpu_freq = psutil.cpu_freq()
+     
 
     return {
         "Nombre": cpu_info["brand_raw"],
-        "Fabricante": cpu_info["vendor_id_raw"],
-        "Arquitectura": platform.architecture()[0],
-        "Frecuencia Base (GHz)": round(cpu_freq.min / 1000, 2) if cpu_freq else "No disponible",
-        "Frecuencia Máxima (GHz)": round(cpu_freq.max / 1000, 2) if cpu_freq else "No disponible",
-        "Frecuencia Actual (GHz)": round(cpu_freq.current / 1000, 2) if cpu_freq else "No disponible",
-        "Núcleos Físicos": psutil.cpu_count(logical=False),
-        "Núcleos Lógicos": psutil.cpu_count(logical=True),
+        
         "Uso del CPU (%)": psutil.cpu_percent(interval=1),
       
     }
@@ -78,7 +72,7 @@ def generar_prompt_personalizado(info_procesador, info_ram, info_disco, info_gpu
     prompt = "Basado en el análisis del sistema, proporciona consejos específicos para optimizar el rendimiento, centrándote solo en las acciones a realizar. Aquí están los puntos clave:\n\n"
     
     # Procesador
-    prompt += f"Procesador: Frecuencia Actual {info_procesador['Frecuencia Actual (GHz)']} GHz..\n"
+    prompt += f"Procesador: Uso del CPU {info_procesador['Uso del CPU (%)']}%.\n"
     
     # RAM
     prompt += f"RAM: Usada {info_ram['RAM Usada (GB)']} GB, Uso {info_ram['Uso de RAM (%)']}%.\n"

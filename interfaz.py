@@ -22,9 +22,11 @@ from configuraciones import (
     ESTILO_BOTON_SECUNDARIO,
     ESTILO_LABEL_TITULO,
     ESTILO_LABEL_TEXTO,
-    ESTILO_TEXTO_CONSEJO,
-    ESTILO_LABEL_CATEGORIA,
-    ESTILO_LABEL_PROMPTPERSONAL
+    #ESTILO_TEXTO_CONSEJO,
+    #ESTILO_LABEL_CATEGORIA,
+    ESTILO_LABEL_PROMPTPERSONAL,
+    ESTILO_LABEL_TEXTO1,
+    ESTILO_FRAMES,
 )
 from funciones_graficos import (
     crear_grafico_cpu,
@@ -41,20 +43,22 @@ from BD import (
 from modelo import (
 entrenar_modelo_arima,
 hacer_predicciones_arima
-
 )
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import markdown
+from tkhtmlview import HTMLLabel
+import webbrowser
 
 class VentanaPrincipal:
     def __init__(self, root):
         self.root = root
         self.root.title("Athen-IA")
         # Configuración inicial con ttkbootstrap
-        self.style = tb.Style("vapor")  # Cambia el tema aquí según tus preferencias
+        self.style = tb.Style("morph")  # Cambia el tema aquí según tus preferencias
+        
         pantalla_ancho = self.root.winfo_screenwidth()
         pantalla_alto = self.root.winfo_screenheight()
         self.root.geometry(f"{pantalla_ancho}x{pantalla_alto}")
-        
         # Crear las tablas si no existen
         crear_base_de_datos()
         # Configurar estilos personalizados
@@ -75,32 +79,46 @@ class VentanaPrincipal:
 
     def _crear_botones_navegacion(self):
         """Crea y posiciona los botones de navegación comunes."""
+        #Frame para los botones
+        frame_botones = tb.Frame(self.contenedor, width=300, height=810)
+        frame_botones.place(relx=0, rely=0.45, anchor="w")
+
         boton_Prediccion = tb.Button(
-            self.contenedor,
+            frame_botones,
             text="Predicciones",
             command=self.mostrar_predicciones,
             style="Primary.TButton",
         )
         boton_inicio = tb.Button(
-            self.contenedor,
+            frame_botones,
             text="Inicio",
             command=self.ventana_inicio,
             style="Primary.TButton",
         )
+        boton_sobre_nosotros = tb.Button(
+             frame_botones,
+             text="Sobre Nosotros",
+             style="Primary.TButton",
+             command=self.ventana_sobre_nosotros,
+         )
 
         boton_salir = tb.Button(
-         self.contenedor,
+         frame_botones,
          text="Salir",
          command=self.root.quit,
-          style="Primary.TButton",
+          style="Secondary.TButton",
         )
  
-        boton_inicio.place(relx=0.0, rely=0.2, anchor="w")
-        boton_Prediccion.place(relx=0.0, rely=0.4, anchor="w")
-        boton_salir.place(relx=0.0, rely=0.8, anchor="w")
+        boton_inicio.place(relx=0.2, rely=0.2, anchor="w")
+        boton_Prediccion.place(relx=0.2, rely=0.4, anchor="w")
+        boton_sobre_nosotros.place(relx=0.2, rely=0.6, anchor="w")
+        boton_salir.place(relx=0.2, rely=0.8, anchor="w")
 
     def ventana_inicio(self):
         """Muestra la pantalla de inicio."""
+        self.actualizando_datos = False  # Controlar si la actualización está activa
+        self.frames_categorias = {}  # Almacenar los frames de las categorías
+        self.canvas_graficos = {}  # Almacenar los canvas de los gráficos
         self.limpiar_contenedor()
 
         # Fondo de imagen
@@ -148,108 +166,115 @@ class VentanaPrincipal:
             return True
         except requests.ConnectionError:
             return False
+     
+
+    def actualizar_datos(self):
+     """Actualiza los datos del análisis sin borrar los botones ni el fondo."""
+     if not self.actualizando_datos:
+        return  # Detener la actualización si no está activa
+
+     try:
+        # Obtener nuevos datos (ya son listas de valores)
+        self.info_procesador = obtener_info_procesador()
+        self.info_ram = obtener_info_ram()
+        self.info_disco = obtener_info_disco()
+        self.info_gpu = obtener_info_gpu()
+
+        # Verificar que los frames de las categorías existan
+        if not hasattr(self, "frames_categorias"):
+            print("Error: Los frames de las categorías no se han creado correctamente.")
+            return
+
+        # Actualizar gráficos y datos
+        self.actualizar_grafico("Uso del CPU (%)", self.info_procesador, crear_grafico_cpu(self.info_procesador))
+        self.actualizar_grafico("RAM", self.info_ram, crear_grafico_ram(self.info_ram))
+        self.actualizar_grafico("Disco", self.info_disco, crear_grafico_disco(self.info_disco))
+
+        if "No disponible" in self.info_gpu.values():
+            self.actualizar_grafico("GPU", {"GPU": "No se detectó ninguna GPU en este sistema"}, crear_grafico_gpu(self.info_gpu))
+        else:
+            self.actualizar_grafico("GPU", self.info_gpu, crear_grafico_gpu(self.info_gpu))
+
+        # Volver a ejecutar la función después de 2000ms (2 segundos)
+        self.root.after(2000, self.actualizar_datos)
+
+     except Exception as e:
+        messagebox.showerror("Error", f"No se pudo actualizar los datos: {e}")
+
+    def actualizar_grafico(self, categoria, datos, grafico):
+        """Actualiza el gráfico y los datos en el frame correspondiente."""
+        frame = self.frames_categorias[categoria]
+
+        # Limpiar solo los widgets de datos y gráficos, no el frame completo
+        for widget in frame.winfo_children():
+            if widget not in [self.canvas_graficos.get(categoria)]:  # Evitar destruir el canvas del gráfico
+                widget.destroy()
+
+        # Mostrar los datos en el frame
+        label_datos = tk.Label(frame, text=str(datos))
+        label_datos.pack()
+
+        # Actualizar el gráfico
+        if categoria in self.canvas_graficos:
+            self.canvas_graficos[categoria].get_tk_widget().destroy()  # Eliminar el canvas anterior
+
+        canvas = FigureCanvasTkAgg(grafico, master=frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill="both", expand=True)
+        self.canvas_graficos[categoria] = canvas  # Guardar el nuevo canvas
+
 
     def ventana_analisis(self):
-        """Muestra la pantalla de análisis del sistema."""
+        """Configura la ventana de análisis con los frames y botones necesarios."""
         self.limpiar_contenedor()
 
-        try:
-            # Obtener información del sistema
-            self.info_procesador = obtener_info_procesador()
-            self.info_ram = obtener_info_ram()
-            self.info_disco = obtener_info_disco()
-            self.info_gpu = obtener_info_gpu()
-            
-            # Almacenar los datos en la base de datos al presionar "Analizar"
-            almacenar_datos(self.info_procesador, self.info_ram, self.info_disco, self.info_gpu)
-           
-            fondo = Image.open("Media/modelo2.png").resize((576, 768), Image.LANCZOS)
-            fondo_tk = ImageTk.PhotoImage(fondo)
+        # Cargar y mostrar el fondo
+        fondo = Image.open("Media/modelo2.png").resize((576, 768), Image.LANCZOS)
+        fondo_tk = ImageTk.PhotoImage(fondo)
 
-            ventana_ancho = self.root.winfo_width()
-            ventana_alto = self.root.winfo_height()
-            fondo_x = (ventana_ancho - 576) // 2
-            fondo_y = (ventana_alto - 768) // 2
+        ventana_ancho = self.root.winfo_width()
+        ventana_alto = self.root.winfo_height()
+        fondo_x = (ventana_ancho - 576) // 2
+        fondo_y = (ventana_alto - 768) // 2
 
-            label_fondo = tb.Label(self.contenedor, image=fondo_tk)
-            label_fondo.image = fondo_tk
-            label_fondo.place(x=fondo_x, y=fondo_y, width=576, height=768)
+        label_fondo = tk.Label(self.contenedor, image=fondo_tk)
+        label_fondo.image = fondo_tk
+        label_fondo.place(x=fondo_x, y=fondo_y, width=576, height=768)
 
-            # Mostrar gráficos y datos
-            fig1 = crear_grafico_cpu(self.info_procesador)
-            self.mostrar_categoria(
-                categoria="Frecuencias CPU",
-                datos=self.info_procesador,
-                grafico=fig1,
-                posicion=(86, 15),
-                ancho=411   ,
-                alto=370,
-            )
+        # Crear los frames para cada categoría
+        self.frames_categorias = {
+            "Uso del CPU (%)": tk.Frame(self.contenedor, width=50, height=50),
+            "RAM": tk.Frame(self.contenedor, width=50, height=50),
+            "Disco": tk.Frame(self.contenedor, width=50, height=50),
+            "GPU": tk.Frame(self.contenedor, width=50, height=50),
+        }
 
-            # Configuración para el frame de la RAM
-            fig3 = crear_grafico_ram(self.info_ram)
-            self.mostrar_categoria(
-                categoria="RAM",
-                datos=self.info_ram,
-                grafico=fig3,
-                posicion=(973, 15),
-                ancho=200,
-                alto=280,
-            )
+        # Posicionar los frames
+        self.frames_categorias["Uso del CPU (%)"].place(x=50, y=15)
+        self.frames_categorias["RAM"].place(x=900, y=60)
+        self.frames_categorias["Disco"].place(x=900, y=420)
+        self.frames_categorias["GPU"].place(x=80, y=430)
 
-            # Configuración para el frame del Disco
-            fig4 = crear_grafico_disco(self.info_disco)
-            self.mostrar_categoria(
-                categoria="Disco",
-                datos=self.info_disco,
-                grafico=fig4,
-                posicion=(973, 405),
-                ancho=200,
-                alto=280,
-            )
+        # Iniciar actualización de datos
+        self.actualizando_datos = True
+        self.actualizar_datos()
 
-            # Configuración para el frame de la GPU
-            fig5 = crear_grafico_gpu(self.info_gpu)
-            if "No disponible" in self.info_gpu.values():
-                self.mostrar_categoria(
-                    categoria="GPU",
-                    datos={"GPU": "No se detecto ninguna GPU en este sistema"},
-                    grafico=fig5,
-                    posicion=(86, 405),
-                    ancho=380,
-                    alto=280,
-                )
-            else:
-                self.mostrar_categoria(
-                    categoria="GPU",
-                    datos=self.info_gpu,
-                    grafico=fig5,
-                    posicion=(30, 405),
-                    ancho=470,
-                    alto=280,
-                )
+        # Botón de consejo
+        self.boton_consejo = tk.Button(
+            self.contenedor,
+            text="Dame un consejo Atenea",
+            command=self.verificar_y_redirigir,
+        )
+        self.boton_consejo.place(relx=0.5, rely=0.8, anchor="center")
 
-
-             
- 
-            # Aplicar estilo al botón de análisis
-            boton_consejo = tb.Button(
-                self.contenedor,
-                text="Dame un consejo Atenea",
-                command=self.verificar_y_redirigir,  # Cambiar el comando
-                style="Primary.TButton",
-            )
-            
-            boton_regresar = tb.Button(
-             self.contenedor,
-             text="Regresar",
-             command=self.ventana_inicio,
-             style="Secundary.TButton",
-            )
-            boton_regresar.place(relx=0.95, rely=0.89, anchor="e")
-            boton_consejo.place(relx=0.5, rely=0.8, anchor="center")
-        except Exception as e:
-            showerror("Error", f"No se pudo completar el análisis: {e}")
+        # Botón de regresar
+        self.boton_regresar = tk.Button(
+            self.contenedor,
+            text="Regresar",
+            command=self.ventana_inicio,
+        )
+        self.boton_regresar.place(relx=0.1, rely=0.9, anchor="center")
+        
 
     def verificar_y_redirigir(self):
         """Verifica la conexión a Internet y redirige o muestra un mensaje."""
@@ -270,7 +295,7 @@ class VentanaPrincipal:
             self.contenedor,
             text=categoria,
             padding=10,
-            bootstyle="secondary",
+            bootstyle="primary",
         )
         frame_categoria.place(x=x, y=y, width=ancho, height=alto)
 
@@ -290,19 +315,26 @@ class VentanaPrincipal:
         canvas.draw()
 
     def ventana_consejo(self):
+        self.actualizando_datos = False
         self.limpiar_contenedor()
-
+         
         # Frame principal para dividir la ventana en dos partes
         frame_principal = tb.Frame(self.contenedor)
-        frame_principal.pack(fill=BOTH, expand=True, padx=10, pady=10)
+        frame_principal.pack(fill=BOTH, expand=True, padx=0.8, pady=0.8)
+
+        # Configurar el grid en el frame principal
+        frame_principal.grid_rowconfigure(0, weight=1)  # Fila 0 ocupa todo el espacio vertical
+        frame_principal.grid_columnconfigure(0, weight=2)  # Columna 0 (consejo) ocupa 2/3 del espacio
+        frame_principal.grid_columnconfigure(1, weight=1)  # Columna 1 (chatbot) ocupa 1/3 del espacio
+
 
         # Frame para el lado izquierdo (consejo)
         frame_izquierdo = tb.Frame(frame_principal)
-        frame_izquierdo.pack(side=LEFT, fill=BOTH, expand=True, padx=10, pady=10)
+        frame_izquierdo.grid(row=0, column=0, sticky="nsew", padx=0.8, pady=0.8)
 
         # Frame para el lado derecho (chatbot)
         frame_derecho = tb.Frame(frame_principal)
-        frame_derecho.pack(side=RIGHT, fill=BOTH, expand=True, padx=10, pady=10)
+        frame_derecho.grid(row=0, column=1, sticky="nsew", padx=0.8, pady=0.8)
 
         try:
             # Generar el prompt y obtener el consejo
@@ -314,36 +346,21 @@ class VentanaPrincipal:
             )
             consejo = obtener_consejo_ia(prompt)
 
-            # Crear un Canvas para el scroll en el lado izquierdo
-            canvas = tb.Canvas(frame_izquierdo)
-            canvas.pack(side=LEFT, fill=BOTH, expand=True)
-
-            # Barra de desplazamiento
-            scrollbar = tb.Scrollbar(frame_izquierdo, orient=VERTICAL, command=canvas.yview)
-            scrollbar.pack(side=RIGHT, fill=Y)
-
-            canvas.configure(yscrollcommand=scrollbar.set)
-            canvas.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-
-            # Frame interno para el contenido del consejo
-            frame_consejo = tb.Frame(canvas)
-            canvas.create_window((0, 0), window=frame_consejo, anchor="nw")
-
+            
             # Aplicar estilo al título del consejo
             label_consejo = tb.Label(
-                frame_consejo,
+                frame_izquierdo,
                 text="Consejo de Optimización:",
                 **ESTILO_LABEL_TITULO,
             )
             label_consejo.pack(pady=10)
 
-            # Aplicar estilo al texto del consejo
-            texto_consejo = tb.Label(
-                frame_consejo,
-                text=consejo,
-                **ESTILO_TEXTO_CONSEJO,
-            )
-            texto_consejo.pack(pady=10)
+            # Convertir el consejo a HTML
+            consejo_html = markdown.markdown(consejo)
+
+            # Mostrar el consejo en formato HTML
+            html_label = HTMLLabel(frame_izquierdo, html=consejo_html)
+            html_label.pack(fill="both", expand=True, padx=10,pady=10)
 
         except Exception as e:
             showerror("Error", f"Error al obtener consejo de IA: {e}")
@@ -353,7 +370,7 @@ class VentanaPrincipal:
 
         # Frame para los botones de volver y salir en la parte inferior
         frame_botones = tb.Frame(self.contenedor)
-        frame_botones.pack(fill=X, padx=10, pady=10)
+        frame_botones.pack(fill=BOTH, padx=10, pady=10)
 
         # Aplicar estilo secundario al botón "Volver al inicio"
         boton_volver = tb.Button(
@@ -378,10 +395,10 @@ class VentanaPrincipal:
         frame_chat = tb.Labelframe(
             frame_chatbot,
             text="Chatbot de Optimización",
-            padding=10,
-            bootstyle="secondary"
+            padding=9,
+            bootstyle="primary"
         )
-        frame_chat.pack(fill=BOTH, expand=True, padx=10, pady=10)
+        frame_chat.pack(fill=BOTH, expand=True, padx=3, pady=5)
 
         # Pregunta inicial
         label_pregunta = tb.Label(
@@ -394,6 +411,7 @@ class VentanaPrincipal:
         # Opciones predefinidas
         self.seleccion = tb.StringVar(value="Otro")
         opciones = ["Optimizar para jugar", "Optimizar para programar", "Otro"]
+
         for opcion in opciones:
             tb.Radiobutton(
                 frame_chat,
@@ -402,16 +420,6 @@ class VentanaPrincipal:
                 value=opcion
             ).pack(anchor="w")
 
-        # Entrada para un prompt personalizado
-        label_prompt = tb.Label(
-            frame_chat,
-            text="O escribe un prompt personalizado:",
-            **ESTILO_LABEL_PROMPTPERSONAL
-        )
-        label_prompt.pack(pady=5)
-
-        self.entry_prompt = tb.Entry(frame_chat, width=50)
-        self.entry_prompt.pack(pady=5)
 
         # Botón para obtener sugerencias
         boton_obtener = tb.Button(
@@ -422,8 +430,37 @@ class VentanaPrincipal:
         boton_obtener.pack(pady=10)
 
         # Área de salida para las sugerencias
-        self.texto_respuesta = tb.Text(frame_chat, wrap="word", height=10, width=80, state="disabled")
-        self.texto_respuesta.pack(pady=10)
+        self.texto_respuesta = HTMLLabel(frame_chat, html="")  # Usar HTMLLabel en lugar de Text
+        self.texto_respuesta.pack(fill="both", expand=True, padx=5, pady=15)
+
+
+        # Frame para el input del prompt personalizado (se ubicará antes del cuadro de salida)
+        self.frame_prompt = tb.Frame(frame_chat)
+
+        # Entrada para un prompt personalizado
+        label_prompt = tb.Label(
+            self.frame_prompt,
+            text="Detalla lo que necesitas:",
+            **ESTILO_LABEL_PROMPTPERSONAL
+        )
+        label_prompt.pack(pady=5)
+
+        self.entry_prompt = tb.Entry(self.frame_prompt, width=50)
+        self.entry_prompt.pack(pady=5)
+
+        # Vincular cambios en la selección a la actualización de la visibilidad del input
+        self.seleccion.trace_add("write", lambda *args: self.actualizar_visibilidad_prompt())
+
+        # Aplicar visibilidad inicial
+        self.actualizar_visibilidad_prompt()
+
+    def actualizar_visibilidad_prompt(self):
+        """Muestra el input antes del cuadro de salida si la opción seleccionada es 'Otro'."""
+        if self.seleccion.get() == "Otro":
+            self.frame_prompt.pack(before=self.texto_respuesta, pady=5)  # Ubicarlo antes de la salida de texto
+        else:
+            self.frame_prompt.pack_forget()  # Ocultar si no es "Otro"
+
 
     def obtener_sugerencias(self):
         opcion = self.seleccion.get()
@@ -463,13 +500,14 @@ class VentanaPrincipal:
 
     def generar_sugerencias(self, prompt_usuario):
         """Genera sugerencias personalizadas basadas en el prompt del usuario."""
-        sugerencias = obtener_consejo_ia(prompt_usuario)
-        self.texto_respuesta.config(state="normal")
-        self.texto_respuesta.delete(1.0, END)
-        self.texto_respuesta.insert(END, sugerencias)
-        self.texto_respuesta.config(state="disabled")
+        sugerencias_md = obtener_consejo_ia(prompt_usuario)
+        # Convertir Markdown a HTML
+        sugerencias_html = markdown.markdown(sugerencias_md)
+        # Mostrar las sugerencias en formato HTML
+        self.texto_respuesta.set_html(sugerencias_html)
 
     def mostrar_predicciones(self):
+     self.actualizando_datos = False
      self.limpiar_contenedor()
 
      try:
@@ -576,32 +614,6 @@ class VentanaPrincipal:
             (serie_disco, predicciones_disco, "Uso del Disco (%)")
         ]
 
-        # Verificar si hay datos de GPU
-        if not df_gpu.empty:
-            try:
-                # Convertir fechas a datetime y nombres de columnas a minúsculas
-                df_gpu["fecha"] = pd.to_datetime(df_gpu["fecha"], errors='coerce')
-                df_gpu.columns = [col.lower() for col in df_gpu.columns]
-
-                # Verificar y renombrar columnas según corresponda
-                if "uso_gpu" not in df_gpu.columns and "uso de gpu (%)" in df_gpu.columns:
-                    df_gpu.rename(columns={"uso de gpu (%)": "uso_gpu"}, inplace=True)
-
-                # Preparar serie temporal para ARIMA
-                serie_gpu = df_gpu.set_index("fecha")["uso_gpu"]
-
-                # Entrenar modelo ARIMA para GPU
-                modelo_gpu = entrenar_modelo_arima(serie_gpu, orden=(1, 1, 1))
-
-                # Hacer predicciones futuras para GPU
-                predicciones_gpu = hacer_predicciones_arima(modelo_gpu, pasos_futuros=6)
-
-                # Agregar gráfico de GPU a la lista
-                graficos.append((serie_gpu, predicciones_gpu, "Uso de GPU (%)"))
-            except Exception as e:
-                print(f"Error al procesar datos de GPU: {e}")
-                messagebox.showwarning("Advertencia", "Error al procesar datos de GPU. Se omitirá el gráfico de GPU.")
-
         # Generar gráficos en grid dinámico
         for i, (serie, pred, titulo) in enumerate(graficos):
             row = i // 2  # Dos gráficos por fila
@@ -633,7 +645,9 @@ class VentanaPrincipal:
             label_mensaje = ttk.Label(contenedor_mensaje, text="GPU no disponible", **ESTILO_LABEL_TITULO)
             label_mensaje.pack(pady=20, fill="both", expand=True)
 
+
         self._crear_botones_navegacion()
+        
 
         # Centrar el contenido en el scrollable_frame
         scrollable_frame.update_idletasks()
@@ -647,3 +661,103 @@ class VentanaPrincipal:
 
      except Exception as e:
         messagebox.showerror("Error", f"Error al generar predicciones: {e}")
+
+    def ventana_sobre_nosotros(self):
+        self.limpiar_contenedor()
+        
+        label_titulo = tb.Label(
+            self.contenedor,
+            text="Sobre Nosotros",
+            **ESTILO_LABEL_TITULO,
+        )
+        label_titulo.pack(pady=10)
+        
+        frame_Progra1 = tb.Labelframe(
+            self.contenedor,
+            text="Erick290211",
+            padding=10,
+            bootstyle="primary",
+        )
+        frame_Progra1.place(x=350, y=50, width=320, height=320)
+
+        # Descripción de Erick
+        label_descripcion1 = tb.Label(
+            frame_Progra1,
+            text="Si deseas saber mas acerca de Erick, acontinucacion te dejamos su link de su Github, para que le vayas a echar un visstazo.",
+            **ESTILO_LABEL_TEXTO1,
+        )
+        label_descripcion1.pack(pady=10)
+
+        label_redes1 = tb.Label(
+            frame_Progra1,
+            text="GitHUb",
+            font=("Arial", 14, "bold"),
+            anchor="center",
+            cursor="hand2",
+        )
+        label_redes1.pack()
+        label_redes1.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/Erick290911"))
+        
+        frame_Progra2 = tb.Labelframe(
+            self.contenedor,
+            text="Jettro12",
+            padding=10,
+            bootstyle="primary",
+        )
+        frame_Progra2.place(x=1000, y=50, width=320, height=320)
+
+        # Descripción de Jair
+        label_descripcion2 = tb.Label(
+            frame_Progra2,
+            text="Si deseas saber mas acerca de Jair, acontinucacion te dejamos su link de su Github, para que le vayas a echar un visstazo.",
+            **ESTILO_LABEL_TEXTO1,
+        )
+        label_descripcion2.pack(pady=10)
+
+        label_redes2 = tb.Label(
+            frame_Progra2,
+            text="GitHUb",
+            font=("Arial", 14, "bold"),
+            anchor="center",
+            cursor="hand2",
+        )
+        label_redes2.pack()
+        label_redes2.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/Jettro12"))
+
+        frame_Progra3 = tb.Labelframe(
+            self.contenedor,
+            text="CupidoRam",
+            padding=10,
+            bootstyle="primary",
+        )
+        frame_Progra3.place(x=680, y=400, width=320, height=320)
+
+        # Descripción de Ramses
+        label_descripcion3 = tb.Label(
+            frame_Progra3,
+            text="Si deseas saber mas acerca de Ramses, acontinucacion te dejamos su link de su Github, para que le vayas a echar un visstazo.",
+            **ESTILO_LABEL_TEXTO1,
+        )
+        label_descripcion3.pack(pady=10)
+
+        label_redes3 = tb.Label(
+            frame_Progra3,
+            text="GitHUb",
+            font=("Arial", 14, "bold"),
+            anchor="center",
+            cursor="hand2",
+        )
+        label_redes3.pack()
+        label_redes3.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/RamCupido"))
+
+        boton_repos = tb.Button(
+            self.contenedor,
+            text="Ir al Repositorio",
+            style="Primary.TButton",
+            command=self.repositorio,
+        )
+        boton_repos.place(relx=0.9, rely=0.8, anchor="center")
+        self._crear_botones_navegacion()
+
+    def repositorio (self):
+        webbrowser.open('https://github.com/Jettro12/BenchmarkSoon')

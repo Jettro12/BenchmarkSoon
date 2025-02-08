@@ -24,13 +24,7 @@ def crear_base_de_datos():
         CREATE TABLE IF NOT EXISTS procesador (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nombre TEXT,
-            fabricante TEXT,
-            arquitectura TEXT,
-            frecuencia_base REAL,
-            frecuencia_maxima REAL,
-            frecuencia_actual REAL,
-            nucleos_fisicos INTEGER,
-            nucleos_logicos INTEGER,
+             
             uso_cpu REAL,
             fecha DATETIME DEFAULT CURRENT_TIMESTAMP
         );
@@ -82,17 +76,11 @@ def almacenar_datos(info_procesador, info_ram, info_disco, info_gpu):
 
     # Insertar datos del procesador
     cursor.execute('''
-        INSERT INTO procesador (nombre, fabricante, arquitectura, frecuencia_base, frecuencia_maxima, frecuencia_actual, nucleos_fisicos, nucleos_logicos, uso_cpu, fecha)
+        INSERT INTO procesador (nombre, uso_cpu, fecha)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         info_procesador["Nombre"],
-        info_procesador["Fabricante"],
-        info_procesador["Arquitectura"],
-        info_procesador["Frecuencia Base (GHz)"],
-        info_procesador["Frecuencia Máxima (GHz)"],
-        info_procesador["Frecuencia Actual (GHz)"],
-        info_procesador["Núcleos Físicos"],
-        info_procesador["Núcleos Lógicos"],
+         
         info_procesador["Uso del CPU (%)"],
         datetime.now()
     ))
