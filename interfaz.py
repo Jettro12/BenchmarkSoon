@@ -5,6 +5,8 @@ from tkinter.scrolledtext import ScrolledText
 import pandas as pd
 import tkinter as tk
 import requests
+import torch  
+import tkinter.ttk as ttk
 from funciones import (
     obtener_info_procesador,
     obtener_info_ram,
@@ -471,10 +473,18 @@ class VentanaPrincipal:
      self.limpiar_contenedor()
 
      try:
+        # Verificar disponibilidad de la GPU
+        if torch.cuda.is_available():
+            device = torch.device("cuda")
+            print("GPU disponible")
+        else:
+            device = torch.device("cpu")
+            print("GPU no disponible, usando CPU")
+
         # Crear un Canvas y un Scrollbar
         canvas = tk.Canvas(self.contenedor)
-        scrollbar = tb.Scrollbar(self.contenedor, orient="vertical", command=canvas.yview)
-        scrollable_frame = tb.Frame(canvas)
+        scrollbar = ttk.Scrollbar(self.contenedor, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
 
         # Configurar el Canvas para que sea desplazable
         scrollable_frame.bind(
@@ -544,7 +554,7 @@ class VentanaPrincipal:
         })
 
         # Títulos y estilos
-        label_titulo = tb.Label(
+        label_titulo = ttk.Label(
             scrollable_frame,
             text="Predicciones de Rendimiento",
             **ESTILO_LABEL_TITULO,
@@ -552,7 +562,7 @@ class VentanaPrincipal:
         label_titulo.pack(pady=20, fill="x", anchor="center")
 
         # Frame para los gráficos en 2 columnas
-        frame_graficos = tb.Frame(scrollable_frame)
+        frame_graficos = ttk.Frame(scrollable_frame)
         frame_graficos.pack(fill="both", expand=True, pady=10)
 
         # Configurar 2 columnas con espaciado
@@ -568,25 +578,29 @@ class VentanaPrincipal:
 
         # Verificar si hay datos de GPU
         if not df_gpu.empty:
-            # Convertir fechas a datetime y nombres de columnas a minúsculas
-            df_gpu["fecha"] = pd.to_datetime(df_gpu["fecha"], errors='coerce')
-            df_gpu.columns = [col.lower() for col in df_gpu.columns]
+            try:
+                # Convertir fechas a datetime y nombres de columnas a minúsculas
+                df_gpu["fecha"] = pd.to_datetime(df_gpu["fecha"], errors='coerce')
+                df_gpu.columns = [col.lower() for col in df_gpu.columns]
 
-            # Verificar y renombrar columnas según corresponda
-            if "uso_gpu" not in df_gpu.columns and "uso de gpu (%)" in df_gpu.columns:
-                df_gpu.rename(columns={"uso de gpu (%)": "uso_gpu"}, inplace=True)
+                # Verificar y renombrar columnas según corresponda
+                if "uso_gpu" not in df_gpu.columns and "uso de gpu (%)" in df_gpu.columns:
+                    df_gpu.rename(columns={"uso de gpu (%)": "uso_gpu"}, inplace=True)
 
-            # Preparar serie temporal para ARIMA
-            serie_gpu = df_gpu.set_index("fecha")["uso_gpu"]
+                # Preparar serie temporal para ARIMA
+                serie_gpu = df_gpu.set_index("fecha")["uso_gpu"]
 
-            # Entrenar modelo ARIMA para GPU
-            modelo_gpu = entrenar_modelo_arima(serie_gpu, orden=(1, 1, 1))
+                # Entrenar modelo ARIMA para GPU
+                modelo_gpu = entrenar_modelo_arima(serie_gpu, orden=(1, 1, 1))
 
-            # Hacer predicciones futuras para GPU
-            predicciones_gpu = hacer_predicciones_arima(modelo_gpu, pasos_futuros=6)
+                # Hacer predicciones futuras para GPU
+                predicciones_gpu = hacer_predicciones_arima(modelo_gpu, pasos_futuros=6)
 
-            # Agregar gráfico de GPU a la lista
-            graficos.append((serie_gpu, predicciones_gpu, "Uso de GPU (%)"))
+                # Agregar gráfico de GPU a la lista
+                graficos.append((serie_gpu, predicciones_gpu, "Uso de GPU (%)"))
+            except Exception as e:
+                print(f"Error al procesar datos de GPU: {e}")
+                messagebox.showwarning("Advertencia", "Error al procesar datos de GPU. Se omitirá el gráfico de GPU.")
 
         # Generar gráficos en grid dinámico
         for i, (serie, pred, titulo) in enumerate(graficos):
@@ -594,7 +608,7 @@ class VentanaPrincipal:
             col = i % 2
 
             # Frame contenedor para cada gráfico con borde
-            contenedor_grafico = tb.Frame(frame_graficos, relief='groove', borderwidth=2)
+            contenedor_grafico = ttk.Frame(frame_graficos, relief='groove', borderwidth=2)
             contenedor_grafico.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
 
             # Generar gráfico
@@ -612,16 +626,14 @@ class VentanaPrincipal:
             col = len(graficos) % 2
 
             # Frame contenedor para el mensaje de GPU no disponible
-            contenedor_mensaje = tb.Frame(frame_graficos, relief='groove', borderwidth=2)
+            contenedor_mensaje = ttk.Frame(frame_graficos, relief='groove', borderwidth=2)
             contenedor_mensaje.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
 
             # Mostrar mensaje de GPU no disponible
-            label_mensaje = tb.Label(contenedor_mensaje, text="GPU no disponible", **ESTILO_LABEL_TITULO)
+            label_mensaje = ttk.Label(contenedor_mensaje, text="GPU no disponible", **ESTILO_LABEL_TITULO)
             label_mensaje.pack(pady=20, fill="both", expand=True)
 
-
-            self._crear_botones_navegacion()
-        
+        self._crear_botones_navegacion()
 
         # Centrar el contenido en el scrollable_frame
         scrollable_frame.update_idletasks()
