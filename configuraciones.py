@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 import groq
+import tkinter as tk
 
 # Cargar las variables desde el archivo .env
 load_dotenv()
@@ -82,3 +83,37 @@ ESTILO_FRAMES = {
         "relief": "solid",  # Borde sólido para el frame
         "borderwidth": 2,  # Grosor del borde
 }
+
+def crear_frame_redondeado(parent, x, y, width, height, radius=80, **kwargs):
+    """Crea un Frame con esquinas redondeadas y un borde azul."""
+    # Crear un Canvas para dibujar el borde redondeado
+    canvas = tk.Canvas(parent, width=width, height=height, highlightthickness=0, bg="white", **kwargs)
+    canvas.place(x=x, y=y)
+
+    # Dibujar el rectángulo redondeado con fondo blanco y borde azul
+    create_rounded_rectangle(canvas, 1, 1, width, height, radius=radius)
+
+    # Crear un Frame interno para colocar los widgets
+    frame = tk.Frame(canvas, bg="white", bd=0, highlightthickness=0)  # Fondo blanco y sin bordes
+    frame.place(x=2, y=2, width=width-4, height=height-4)  # Ajustar el tamaño para que no cubra los bordes
+
+    return frame
+
+def create_rounded_rectangle(canvas, x1, y1, x2, y2, radius=80, **kwargs):
+    """Dibuja un rectángulo con esquinas redondeadas en un canvas de Tkinter"""
+    points = [
+        x1 + radius, y1,
+        x2 - radius, y1,
+        x2, y1, x2, y1 + radius,
+        x2, y2 - radius,
+        x2, y2, x2 - radius, y2,
+        x1 + radius, y2,
+        x1, y2, x1, y2 - radius,
+        x1, y1 + radius,
+        x1, y1
+    ]
+    # Dibuja el fondo del rectángulo
+    canvas.create_polygon(points, smooth=True, fill="white", **kwargs)
+    
+    # Dibuja el borde azul alrededor del rectángulo
+    canvas.create_polygon(points, smooth=True, outline="#1E90FF", width=1)

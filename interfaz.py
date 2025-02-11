@@ -26,7 +26,7 @@ from configuraciones import (
     #ESTILO_LABEL_CATEGORIA,
     ESTILO_LABEL_PROMPTPERSONAL,
     ESTILO_LABEL_TEXTO1,
-    ESTILO_FRAMES,
+    ESTILO_FRAMES, crear_frame_redondeado
 )
 from funciones_graficos import (
     crear_grafico_cpu,
@@ -82,12 +82,12 @@ class VentanaPrincipal:
     def _crear_botones_navegacion(self):
         """Crea y posiciona los botones de navegación comunes."""
         #Iconos
-        self.icono_home = ImageTk.PhotoImage(Image.open("BenchmarkSoon/Media/home.png").resize((30, 30)))
-        self.icono_salir = ImageTk.PhotoImage(Image.open("BenchmarkSoon/Media/salir.png").resize((20, 20)))
-        self.icono_predic = ImageTk.PhotoImage(Image.open("BenchmarkSoon/Media/predic.png").resize((30, 30)))
-        self.icono_nosotros = ImageTk.PhotoImage(Image.open("BenchmarkSoon/Media/noso.png").resize((30, 30)))
-        self.icono_regresar = ImageTk.PhotoImage(Image.open("BenchmarkSoon/Media/regresar.png").resize((20, 20)))
-        self.icono_consejo = ImageTk.PhotoImage(Image.open("BenchmarkSoon/Media/consejo.png").resize((30, 30)))
+        self.icono_home = ImageTk.PhotoImage(Image.open("Media/home.png").resize((30, 30)))
+        self.icono_salir = ImageTk.PhotoImage(Image.open("Media/salir.png").resize((20, 20)))
+        self.icono_predic = ImageTk.PhotoImage(Image.open("Media/predic.png").resize((30, 30)))
+        self.icono_nosotros = ImageTk.PhotoImage(Image.open("Media/noso.png").resize((30, 30)))
+        self.icono_regresar = ImageTk.PhotoImage(Image.open("Media/regresar.png").resize((20, 20)))
+        self.icono_consejo = ImageTk.PhotoImage(Image.open("Media/consejo.png").resize((30, 30)))
 
         #Frame para los botones
         frame_botones = tb.Frame(self.contenedor, width=300, height=810)
@@ -145,7 +145,7 @@ class VentanaPrincipal:
 
         # Fondo de imagen
         try:
-            fondo = Image.open("BenchmarkSoon/Media/modelo1.png").resize((576, 768), Image.LANCZOS)
+            fondo = Image.open("Media/modelo1.png").resize((576, 768), Image.LANCZOS)
             fondo_tk = ImageTk.PhotoImage(fondo)
 
             self.root.update()
@@ -169,7 +169,7 @@ class VentanaPrincipal:
         )
         label_titulo.pack(pady=20)
 
-        self.icono_analisis=ImageTk.PhotoImage(Image.open("BenchmarkSoon/Media/analisis.png").resize((30, 30)))
+        self.icono_analisis=ImageTk.PhotoImage(Image.open("Media/analisis.png").resize((30, 30)))
 
         # Botón para ir al análisis
         boton_analizar = tb.Button(
@@ -258,7 +258,7 @@ class VentanaPrincipal:
         self.limpiar_contenedor()
 
         # Cargar y mostrar el fondo
-        fondo = Image.open("BenchmarkSoon/Media/modelo2.png").resize((576, 768), Image.LANCZOS)
+        fondo = Image.open("Media/modelo2.png").resize((576, 768), Image.LANCZOS)
         fondo_tk = ImageTk.PhotoImage(fondo)
 
         ventana_ancho = self.root.winfo_width()
@@ -272,10 +272,10 @@ class VentanaPrincipal:
 
         # Crear los frames para cada categoría
         self.frames_categorias = {
-            "Uso del CPU (%)": tk.Frame(self.contenedor, width=50, height=50),
-            "RAM": tk.Frame(self.contenedor, width=50, height=50),
-            "Disco": tk.Frame(self.contenedor, width=50, height=50),
-            "GPU": tk.Frame(self.contenedor, width=50, height=50),
+            "Uso del CPU (%)": tb.Frame(self.contenedor, width=400, height=350),
+            "RAM": tb.Frame(self.contenedor, width=300, height=200),
+            "Disco": tb.Frame(self.contenedor, width=300, height=200),
+            "GPU": tb.Frame(self.contenedor, width=300, height=200),
         }
 
         # Posicionar los frames
@@ -343,11 +343,15 @@ class VentanaPrincipal:
         self.actualizar_datos()
 
         # Botón de consejo
-        self.boton_consejo = tk.Button(
+        self.boton_consejo = tb.Button(
             self.contenedor,
             text="Dame un consejo Atenea",
             command=self.verificar_y_redirigir,
+            style="Primary.TButton",
             cursor="hand2",
+            image=self.icono_consejo,
+            compound=tk.LEFT,
+        
         )
         self.boton_consejo.place(relx=0.5, rely=0.8, anchor="center")
 
@@ -357,11 +361,8 @@ class VentanaPrincipal:
             text="Regresar",
             command=self.ventana_inicio,
             style="Secondary.TButton",
-            cursor="hand2",
-            image=self.icono_regresar,
-            compound=tk.LEFT,
         )
-        self.boton_regresar.place(relx=0.1, rely=0.9, anchor="center")
+        self.boton_regresar.place(relx=0.1, rely=0.95, anchor="center")
         
 
     def verificar_y_redirigir(self):
@@ -733,29 +734,29 @@ class VentanaPrincipal:
     def ventana_sobre_nosotros(self):
         self.limpiar_contenedor()
         #Iconos
-        self.imagen_git = ImageTk.PhotoImage(Image.open("BenchmarkSoon/Media/git.png").resize((60, 60)))
-        self.icono_web = ImageTk.PhotoImage(Image.open("BenchmarkSoon/Media/web.png").resize((20, 20)))
+        self.imagen_git = ImageTk.PhotoImage(Image.open("Media/git.png").resize((60, 60)))
+        self.icono_web = ImageTk.PhotoImage(Image.open("Media/web.png").resize((20, 20)))
 
-        label_titulo = tb.Label(
-            self.contenedor,
-            text="Sobre Nosotros",
-            **ESTILO_LABEL_TITULO,
-        )
-        label_titulo.pack(pady=10)
-        
-        frame_Progra1 = tb.Labelframe(
-            self.contenedor,
-            text="Erick290211",
-            padding=10,
-            bootstyle="primary",
-        )
-        frame_Progra1.place(x=350, y=50, width=320, height=320)
+        # Crear frames redondeados con bordes azules y títulos
+        frame_Progra1 = crear_frame_redondeado(self.contenedor, x=350, y=50, width=320, height=320, radius=15)
+        frame_Progra2 = crear_frame_redondeado(self.contenedor, x=1000, y=50, width=320, height=320, radius=15)
+        frame_Progra3 = crear_frame_redondeado(self.contenedor, x=680, y=400, width=320, height=320, radius=15)
+
+        # Agregar títulos a los frames
+        titulo1 = tb.Label(frame_Progra1, text="Erick290211", font=("Helvetica", 16, "bold"), foreground="blue")
+        titulo1.pack(pady=10)
+
+        titulo2 = tb.Label(frame_Progra2, text="Jettro12", font=("Helvetica", 16, "bold"), foreground="blue")
+        titulo2.pack(pady=10)
+
+        titulo3 = tb.Label(frame_Progra3, text="CupidoRam", font=("Helvetica", 16, "bold"), foreground="blue")
+        titulo3.pack(pady=10)
 
         # Descripción de Erick
         label_descripcion1 = tb.Label(
             frame_Progra1,
-            text="- Desarrollador backend\n"+
-                "- Desarrollador Frontend\n"+
+            text="- Desarrollador backend\n" +
+                "- Desarrollador Frontend\n" +
                 "- Tester/QA\n"
                 "Si deseas saber mas acerca de Erick, te dejamos su GitHub, dale click en el logo.",
             **ESTILO_LABEL_TEXTO1,
@@ -770,7 +771,7 @@ class VentanaPrincipal:
             foreground="black",
         )
         label_redes1.pack()
-        
+
         boton_github1 = tk.Label(
             frame_Progra1,
             image=self.imagen_git,
@@ -779,20 +780,12 @@ class VentanaPrincipal:
         boton_github1.pack(pady=10)
         boton_github1.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/Erick290911"))
 
-        frame_Progra2 = tb.Labelframe(
-            self.contenedor,
-            text="Jettro12",
-            padding=10,
-            bootstyle="primary",
-        )
-        frame_Progra2.place(x=1000, y=50, width=320, height=320)
-
         # Descripción de Jair
         label_descripcion2 = tb.Label(
             frame_Progra2,
-            text="- Desarrollador backend\n"+
-                "- Desarrollador Frontend\n"+
-                "- Arquitecto de Software\n"+
+            text="- Desarrollador backend\n" +
+                "- Desarrollador Frontend\n" +
+                "- Arquitecto de Software\n" +
                 "Si deseas saber mas acerca de Jair, te dejamos su GitHub, dale click en el logo.",
             **ESTILO_LABEL_TEXTO1,
         )
@@ -806,7 +799,7 @@ class VentanaPrincipal:
             foreground="black",
         )
         label_redes2.pack()
-        
+
         boton_github2 = tk.Label(
             frame_Progra2,
             image=self.imagen_git,
@@ -815,20 +808,12 @@ class VentanaPrincipal:
         boton_github2.pack(pady=10)
         boton_github2.bind("<Button-1>", lambda e: webbrowser.open("https://github.com/Jettro12"))
 
-        frame_Progra3 = tb.Labelframe(
-            self.contenedor,
-            text="CupidoRam",
-            padding=10,
-            bootstyle="primary",
-        )
-        frame_Progra3.place(x=680, y=400, width=320, height=320)
-
         # Descripción de Ramses
         label_descripcion3 = tb.Label(
             frame_Progra3,
-            text="- Desarrollador backend\n"+
-                "- Desarrollador Frontend\n"+
-                "- Diseñador UX/UI\n"+
+            text="- Desarrollador backend\n" +
+                "- Desarrollador Frontend\n" +
+                "- Diseñador UX/UI\n" +
                 "Si deseas saber mas acerca de Ramses, te dejamos su GitHub, dale click en el logo.",
             **ESTILO_LABEL_TEXTO1,
         )

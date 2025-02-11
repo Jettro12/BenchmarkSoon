@@ -52,9 +52,9 @@ def obtener_info_gpu():
         gpu = gpus[0]
         return {
             "Nombre": gpu.name,
-            "Carga (%)": gpu.load * 100,
-            "Memoria Usada (GB)": round(gpu.memoryUsed, 2) if gpu.memoryUsed is not None else 0,
-            "Memoria Total (GB)": round(gpu.memoryTotal, 2) if gpu.memoryTotal is not None else 0,
+            "Carga (%)": round(gpu.load * 100, 2),
+            "Memoria Usada (GB)": round(gpu.memoryUsed / 1024, 2) if gpu.memoryUsed is not None else 0,
+            "Memoria Total (GB)": round(gpu.memoryTotal / 1024, 2) if gpu.memoryTotal is not None else 0,
             "Temperatura (°C)": gpu.temperature,
         }
     except Exception as e:
@@ -122,7 +122,10 @@ def obtener_consejo_ia(prompt):
         # Llamada al modelo de Groq con el prompt
         response = client.chat.completions.create(
             model=model,
-            messages=[{"role": "user", "content": prompt}]
+            messages=[
+                {"role": "system", "content": "Eres un asistente útil que proporciona consejos de optimización para sistemas informáticos. Devuelve la respuesta en formato Markdown."},
+                {"role": "user", "content": prompt}
+            ]
         )
         return response.choices[0].message.content
     except Exception as e:
