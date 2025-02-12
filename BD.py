@@ -12,7 +12,7 @@ from funciones import (
     obtener_info_procesador,
     obtener_info_ram,
     obtener_info_disco,
-    obtener_info_gpu,
+    
 )
 
 def crear_base_de_datos():
@@ -54,23 +54,11 @@ def crear_base_de_datos():
         );
     ''')
 
-    # Crear tabla para almacenar información de la GPU
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS gpu (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre TEXT,
-            carga REAL,
-            memoria_usada REAL,
-            memoria_total REAL,
-            temperatura REAL,
-            fecha DATETIME DEFAULT CURRENT_TIMESTAMP
-        );
-    ''')
 
     conn.commit()
     conn.close()
 
-def almacenar_datos(info_procesador, info_ram, info_disco, info_gpu):
+def almacenar_datos(info_procesador, info_ram, info_disco):
     conn = sqlite3.connect('rendimiento.db')
     cursor = conn.cursor()
 
@@ -109,19 +97,7 @@ def almacenar_datos(info_procesador, info_ram, info_disco, info_gpu):
         datetime.now()
     ))
 
-    # Insertar datos de la GPU (si están disponibles)
-    if "No disponible" not in info_gpu.values():
-        cursor.execute('''
-            INSERT INTO gpu (nombre, carga, memoria_usada, memoria_total, temperatura, fecha)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (
-            info_gpu["Nombre"],
-            info_gpu["Carga (%)"],
-            info_gpu["Memoria Usada (GB)"],
-            info_gpu["Memoria Total (GB)"],
-            info_gpu["Temperatura (°C)"],
-            datetime.now()
-        ))
+    
 
     conn.commit()
     conn.close()
@@ -134,7 +110,7 @@ def preparar_datos_historicos():
     df_procesador = pd.read_sql_query("SELECT * FROM procesador", conn)
     df_ram = pd.read_sql_query("SELECT * FROM ram", conn)
     df_disco = pd.read_sql_query("SELECT * FROM disco", conn)
-    df_gpu = pd.read_sql_query("SELECT * FROM gpu", conn)
+    
 
     conn.close()
 
@@ -142,7 +118,7 @@ def preparar_datos_historicos():
     df_procesador.columns = [col.lower() for col in df_procesador.columns]
     df_ram.columns = [col.lower() for col in df_ram.columns]
     df_disco.columns = [col.lower() for col in df_disco.columns]
-    df_gpu.columns = [col.lower() for col in df_gpu.columns]
+    
 
     # Renombrar columnas específicas para que coincidan con lo esperado
     if "uso de ram (%)" in df_ram.columns and "uso_ram" not in df_ram.columns:
@@ -155,7 +131,7 @@ def preparar_datos_historicos():
         df["fecha"] = pd.to_datetime(df["fecha"], errors="coerce")
         df.sort_values("fecha", inplace=True)
 
-    return df_procesador, df_ram, df_disco, df_gpu
+    return df_procesador, df_ram, df_disco
 
 def crear_grafico_arima(serie_temporal, predicciones, titulo, frame):
     """

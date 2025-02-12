@@ -11,7 +11,6 @@ from funciones import (
     obtener_info_procesador,
     obtener_info_ram,
     obtener_info_disco,
-    obtener_info_gpu,
     generar_prompt_personalizado,
     obtener_consejo_ia,
 )
@@ -32,7 +31,7 @@ from funciones_graficos import (
     crear_grafico_cpu,
     crear_grafico_ram,
     crear_grafico_disco,
-    crear_grafico_gpu,
+    
 )
 from BD import (
     almacenar_datos,
@@ -193,7 +192,6 @@ class VentanaPrincipal:
             return True
         except requests.ConnectionError:
             return False
-     
 
     def actualizar_datos(self):
      """Actualiza los datos del análisis sin borrar los botones ni el fondo."""
@@ -205,7 +203,6 @@ class VentanaPrincipal:
         self.info_procesador = obtener_info_procesador()
         self.info_ram = obtener_info_ram()
         self.info_disco = obtener_info_disco()
-        self.info_gpu = obtener_info_gpu()
 
         # Verificar que los frames de las categorías existan
         if not hasattr(self, "frames_categorias"):
@@ -225,13 +222,6 @@ class VentanaPrincipal:
             crear_grafico_disco(self.info_disco, self.ax_disco)
             self.canvas_disco.draw()
 
-        if hasattr(self, "ax_gpu"):
-            if "No disponible" in self.info_gpu.values():
-                crear_grafico_gpu({"GPU": "No se detectó ninguna GPU en este sistema"}, self.ax_gpu)
-            else:
-                crear_grafico_gpu(self.info_gpu, self.ax_gpu)
-            self.canvas_gpu.draw()
-
             # Actualizar las etiquetas con las especificaciones
         self.label_cpu.config(
             text=f"Nombre: {self.info_procesador.get('Nombre', 'CPU')}\nUso: {self.info_procesador.get('Uso del CPU (%)', 0)}%"
@@ -242,10 +232,7 @@ class VentanaPrincipal:
         self.label_disco.config(
             text=f"Disco\nUso: {self.info_disco.get('Uso de Disco (%)', 0)}%"
         )
-        self.label_gpu.config(
-            text=f"Nombre: {self.info_gpu.get('Nombre', 'GPU')}\nUso: {self.info_gpu.get('Carga (%)', 0)}%"
-        )
-
+       
         # Volver a ejecutar la función después de 2000ms (2 segundos)
         self.root.after(2000, self.actualizar_datos)
 
@@ -263,7 +250,7 @@ class VentanaPrincipal:
 
         ventana_ancho = self.root.winfo_width()
         ventana_alto = self.root.winfo_height()
-        fondo_x = (ventana_ancho - 576) // 2
+        fondo_x = 405
         fondo_y = (ventana_alto - 768) // 2
 
         label_fondo = tk.Label(self.contenedor, image=fondo_tk)
@@ -272,17 +259,17 @@ class VentanaPrincipal:
 
         # Crear los frames para cada categoría
         self.frames_categorias = {
-            "Uso del CPU (%)": tb.Frame(self.contenedor, width=400, height=350),
-            "RAM": tb.Frame(self.contenedor, width=300, height=200),
-            "Disco": tb.Frame(self.contenedor, width=300, height=200),
-            "GPU": tb.Frame(self.contenedor, width=300, height=200),
+            "Uso del CPU (%)": tb.Frame(self.contenedor, width=400, height=200),
+            "RAM": tb.Frame(self.contenedor, width=400, height=200),
+            "Disco": tb.Frame(self.contenedor, width=400, height=200),
+            "GPU": tb.Frame(self.contenedor, width=400, height=200),
         }
 
         # Posicionar los frames
-        self.frames_categorias["Uso del CPU (%)"].place(x=50, y=15)
-        self.frames_categorias["RAM"].place(x=1100, y=15)
-        self.frames_categorias["Disco"].place(x=1100, y=430)
-        self.frames_categorias["GPU"].place(x=50, y=430)
+        self.frames_categorias["Uso del CPU (%)"].place(x=995, y=200)
+        self.frames_categorias["RAM"].place(x=130, y=25)
+        self.frames_categorias["Disco"].place(x=130, y=405)
+        
 
         # Inicializar gráficos
         self.fig_cpu, self.ax_cpu = plt.subplots(figsize=(4, 2))
@@ -296,10 +283,6 @@ class VentanaPrincipal:
         self.fig_disco, self.ax_disco = plt.subplots(figsize=(3, 2))
         self.canvas_disco = FigureCanvasTkAgg(self.fig_disco, master=self.frames_categorias["Disco"])
         self.canvas_disco.get_tk_widget().pack(fill="both", expand=True)
-
-        self.fig_gpu, self.ax_gpu = plt.subplots(figsize=(3, 2))
-        self.canvas_gpu = FigureCanvasTkAgg(self.fig_gpu, master=self.frames_categorias["GPU"])
-        self.canvas_gpu.get_tk_widget().pack(fill="both", expand=True)
 
         # Etiquetas para mostrar las especificaciones encima de los gráficos
         self.label_cpu = tb.Label(
@@ -329,15 +312,6 @@ class VentanaPrincipal:
         )
         self.label_disco.pack(pady=10)
 
-        self.label_gpu = tb.Label(
-            self.frames_categorias["GPU"],
-            text="",  # Texto inicial vacío
-            font=("Helvetica", 12, "bold"),
-            foreground="black",  # Texto negro
-            background="",  # Fondo transparente
-        )
-        self.label_gpu.pack(pady=10)
-
         # Iniciar actualización de datos
         self.actualizando_datos = True
         self.actualizar_datos()
@@ -345,7 +319,8 @@ class VentanaPrincipal:
         # Botón de consejo
         self.boton_consejo = tb.Button(
             self.contenedor,
-            text="Dame un consejo Atenea",
+            text="""Dame un consejo 
+        Atenea""",
             command=self.verificar_y_redirigir,
             style="Primary.TButton",
             cursor="hand2",
@@ -353,7 +328,7 @@ class VentanaPrincipal:
             compound=tk.LEFT,
         
         )
-        self.boton_consejo.place(relx=0.5, rely=0.8, anchor="center")
+        self.boton_consejo.place(relx=0.75, rely=0.8, anchor="center")
 
         # Botón de regresar
         self.boton_regresar = tb.Button(
@@ -405,7 +380,6 @@ class VentanaPrincipal:
                 self.info_procesador,
                 self.info_ram,
                 self.info_disco,
-                self.info_gpu,
             )
             consejo = obtener_consejo_ia(prompt)
 
@@ -542,7 +516,7 @@ class VentanaPrincipal:
                     self.info_procesador,
                     self.info_ram,
                     self.info_disco,
-                    self.info_gpu
+                    
                 ) + f"\n\n{prompt_usuario}"
                 self.generar_sugerencias(prompt_combinado)
             else:
@@ -553,7 +527,7 @@ class VentanaPrincipal:
                     self.info_procesador,
                     self.info_ram,
                     self.info_disco,
-                    self.info_gpu
+                    
                 )
                 prompt_jugar += "\n\nDe acuerdo al analisis del sistema quiero suguerencias cortas, especificas y de mucho valor para optimizar la PC para jugar y que vaya con fluides."
                 self.generar_sugerencias(prompt_jugar)
@@ -562,7 +536,7 @@ class VentanaPrincipal:
                     self.info_procesador,
                     self.info_ram,
                     self.info_disco,
-                    self.info_gpu
+                    
                 )
                 prompt_programar += "\n\nDe acuerdo al analisis del sistema quiero suguerencias cortas, especificas y de mucho valor para optimizar la PC para Programas y siguiere para tres tipos de lenguajes python Java C# para que obtenga lo recursos necesarios para programar ."
                 self.generar_sugerencias(prompt_programar)
@@ -580,14 +554,7 @@ class VentanaPrincipal:
      self.limpiar_contenedor()
 
      try:
-        # Verificar disponibilidad de la GPU
-        if torch.cuda.is_available():
-            device = torch.device("cuda")
-            print("GPU disponible")
-        else:
-            device = torch.device("cpu")
-            print("GPU no disponible, usando CPU")
-
+        
         # Crear un Canvas y un Scrollbar
         canvas = tk.Canvas(self.contenedor)
         scrollbar = ttk.Scrollbar(self.contenedor, orient="vertical", command=canvas.yview)
@@ -607,7 +574,7 @@ class VentanaPrincipal:
         scrollbar.pack(side="right", fill="y")
 
         # Cargar y preparar datos históricos
-        df_procesador, df_ram, df_disco, df_gpu = preparar_datos_historicos()
+        df_procesador, df_ram, df_disco = preparar_datos_historicos()
 
         # Verificar que existan datos suficientes para las predicciones
         if df_ram.empty or df_procesador.empty or df_disco.empty:
@@ -701,23 +668,8 @@ class VentanaPrincipal:
             texto_interpretacion.config(state="disabled")
             texto_interpretacion.pack(pady=10, fill="x", padx=10)
 
-        # Si no hay datos de GPU, mostrar un mensaje en lugar del gráfico
-        if df_gpu.empty:
-            row = len(graficos) // 2  # Calcular la fila correspondiente
-            col = len(graficos) % 2
-
-            # Frame contenedor para el mensaje de GPU no disponible
-            contenedor_mensaje = ttk.Frame(frame_graficos, relief='groove', borderwidth=2)
-            contenedor_mensaje.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
-
-            # Mostrar mensaje de GPU no disponible
-            label_mensaje = ttk.Label(contenedor_mensaje, text="GPU no disponible", **ESTILO_LABEL_TITULO)
-            label_mensaje.pack(pady=20, fill="both", expand=True)
-
-
         self._crear_botones_navegacion()
         
-
         # Centrar el contenido en el scrollable_frame
         scrollable_frame.update_idletasks()
         canvas.config(scrollregion=canvas.bbox("all"))

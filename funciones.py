@@ -1,6 +1,4 @@
 import psutil
-import platform
-import GPUtil
 import cpuinfo
 from configuraciones import model, client
 
@@ -36,38 +34,8 @@ def obtener_info_disco():
         "Uso de Disco (%)": disco_info.percent,
     }
 
-#Obtener info del gpu
-def obtener_info_gpu():
-    try:
-        gpus = GPUtil.getGPUs()
-        if not gpus:
-            return {
-                "Nombre": "No disponible",
-                "Carga (%)": 0,
-                "Memoria Usada (GB)": 0,
-                "Memoria Total (GB)": 0,
-                "Temperatura (°C)": 0,
-            }
-        
-        gpu = gpus[0]
-        return {
-            "Nombre": gpu.name,
-            "Carga (%)": round(gpu.load * 100, 2),
-            "Memoria Usada (GB)": round(gpu.memoryUsed / 1024, 2) if gpu.memoryUsed is not None else 0,
-            "Memoria Total (GB)": round(gpu.memoryTotal / 1024, 2) if gpu.memoryTotal is not None else 0,
-            "Temperatura (°C)": gpu.temperature,
-        }
-    except Exception as e:
-        return {
-            "Nombre": "No disponible",
-            "Carga (%)": 0,
-            "Memoria Usada (GB)": 0,
-            "Memoria Total (GB)": 0,
-            "Temperatura (°C)": 0,
-        }
- 
 # Función para generar el prompt personalizado
-def generar_prompt_personalizado(info_procesador, info_ram, info_disco, info_gpu):
+def generar_prompt_personalizado(info_procesador, info_ram, info_disco):
     
     prompt = """
         Basado en el análisis del sistema, proporciona consejos específicos para optimizar el rendimiento. 
@@ -109,9 +77,6 @@ def generar_prompt_personalizado(info_procesador, info_ram, info_disco, info_gpu
     
     # Disco
     prompt += f"Disco: Usado {info_disco['Disco Usado (GB)']} GB, Uso {info_disco['Uso de Disco (%)']}%.\n"
-    
-    # GPU
-    prompt += f"GPU: Carga {info_gpu['Carga (%)']}%, Memoria Usada {info_gpu['Memoria Usada (GB)']} GB, Temperatura {info_gpu['Temperatura (°C)']} °C.\n"
     
     prompt += "Proporciona acciones específicas para optimizar este sistema."
     return prompt
