@@ -1,106 +1,139 @@
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
 
-def crear_grafico_cpu(info):
-    fig, ax = plt.subplots(figsize=(3, 1.8))  # Aumenta el tamaño de la figura
-    labels = ["Frecuencia Base", "Frecuencia Máxima", "Frecuencia Actual"]
-    values = [
-        info["Frecuencia Base (GHz)"],
-        info["Frecuencia Máxima (GHz)"],
-        info["Frecuencia Actual (GHz)"]
-    ]
-    sns.barplot(x=labels, y=values, hue=labels, palette="viridis", ax=ax, dodge=False, legend=False)
-    
-    # Ajustar el tamaño del texto de las etiquetas y títulos
-    ax.set_title("Rendimiento del CPU", fontsize=9, color='white')  # Tamaño de la fuente ajustado y color blanco
-    ax.set_ylabel("GHz", fontsize=7, color='white')  # Tamaño de la fuente ajustado y color blanco
-    ax.set_xlabel("", fontsize=7, color='white')  # Color blanco para las etiquetas del eje x
-    
-    # Ajustar el tamaño y color de las etiquetas del eje
-    ax.tick_params(axis='x', colors='white', labelsize=6)  # Tamaño ajustado y color blanco
-    ax.tick_params(axis='y', colors='white', labelsize=6)  # Tamaño ajustado y color blanco
+# Variables globales para almacenar historiales
+historial_cpu = []
+historial_ram = []
+historial_disco = []
+ 
 
-# Cambiar el color de los bordes de los ejes a blanco
-    for spine in ax.spines.values():
-        spine.set_edgecolor('white')
+def crear_grafico_cpu(datos, ax):
+    """
+    Actualiza un gráfico de barras del uso del CPU.
+    """
+    global historial_cpu
 
-    # Eliminar el fondo blanco
-    fig.patch.set_alpha(0.0)
-    ax.patch.set_alpha(0.0)
+    if "Uso del CPU (%)" not in datos:
+        raise ValueError("La clave 'Uso del CPU (%)' no está presente en los datos.")
 
-    return fig
+    # Agregar el valor actual al historial
+    uso_actual = datos["Uso del CPU (%)"]
+    historial_cpu.append(uso_actual)
 
-def crear_grafico_ram(info):
-    fig, ax = plt.subplots(figsize=(3, 1.8))  # Tamaño de la figura
-    sizes = [info["RAM Usada (GB)"], info["RAM Libre (GB)"]]
-    labels = ["Usada", "Libre"]
-    colors = sns.color_palette("muted")
-    wedges, texts, autotexts = ax.pie(
-        sizes,
-        labels=labels,
-        autopct='%1.1f%%',
-        startangle=90,
-        colors=colors,
-        wedgeprops={'width': 0.4},
-        textprops={'color': 'white'}  # Color de las etiquetas
+    # Limitar el historial a los últimos 20 registros
+    if len(historial_cpu) > 20:
+        historial_cpu.pop(0)
+
+    # Limpiar el eje y dibujar el nuevo gráfico
+    ax.clear()
+    x = np.arange(len(historial_cpu))
+    y = historial_cpu
+    colores = ['green' if val < 50 else 'orange' if val < 80 else 'red' for val in y]
+    ax.bar(x, y, color=colores, edgecolor='black')
+
+    # Configurar el fondo transparente
+    ax.set_facecolor('none')  # Fondo del eje transparente
+    ax.figure.patch.set_alpha(0)  # Fondo de la figura transparente
+
+    # Estilo del gráfico
+    ax.set_title("Uso del CPU", color='black')  # Color del título
+    ax.set_xlabel("Tiempo", color='black')  # Color del eje X
+    #ax.set_ylabel("Uso (%)", color='black')  # Color del eje Y
+    ax.tick_params(axis='x', colors='black')  # Color de las etiquetas del eje X
+    ax.tick_params(axis='y', colors='black')  # Color de las etiquetas del eje Y
+    ax.set_ylim(0, 100)
+    ax.grid(axis='y', linestyle='--', alpha=0.7, color='black')  # Color de la cuadrícula
+
+    # Mostrar el nombre y los datos encima del gráfico
+    nombre = datos.get("Nombre", "CPU")
+    ax.text(
+        0.5, 1.1,  # Posición (x, y) relativa al gráfico
+        f"{nombre}\nUso: {uso_actual}%",  # Texto a mostrar
+        transform=ax.transAxes,  # Usar coordenadas relativas
+        fontsize=10, color='none', ha='center', va='bottom'  # Estilo del texto
     )
-    for text in texts:
-        text.set_color('white')
-    for autotext in autotexts:
-        autotext.set_color('white')
-    ax.set_title("Uso de RAM (Dona)", fontsize=9, color='white')  # Tamaño de la fuente ajustado y color blanco
 
-    # Eliminar el fondo blanco
-    fig.patch.set_alpha(0.0)
-    ax.patch.set_alpha(0.0)
+def crear_grafico_ram(datos, ax):
+    """
+    Actualiza un gráfico de área del uso de RAM.
+    """
+    global historial_ram
 
-    return fig
+    if "Uso de RAM (%)" not in datos:
+        raise ValueError("La clave 'Uso de RAM (%)' no está presente en los datos.")
 
-def crear_grafico_disco(info):
-    fig, ax = plt.subplots(figsize=(3, 1.8))  # Tamaño de la figura
-    sizes = [info["Disco Usado (GB)"], info["Disco Libre (GB)"]]
-    labels = ["Usado", "Libre"]
-    colors = sns.color_palette("muted")
-    wedges, texts, autotexts = ax.pie(
-        sizes,
-        labels=labels,
-        autopct='%1.1f%%',
-        startangle=90,
-        colors=colors,
-        wedgeprops={'width': 0.4},
-        textprops={'color': 'white'}  # Color de las etiquetas
+    uso_actual = datos["Uso de RAM (%)"]
+    historial_ram.append(uso_actual)
+    if len(historial_ram) > 20:
+        historial_ram.pop(0)
+
+    ax.clear()
+    x = np.arange(len(historial_ram))
+    y = np.array(historial_ram)
+    ax.fill_between(x, y, color='blue', alpha=0.4)
+    ax.plot(x, y, color='blue', linewidth=2)
+
+    # Configurar el fondo transparente
+    ax.set_facecolor('none')  # Fondo del eje transparente
+    ax.figure.patch.set_alpha(0)  # Fondo de la figura transparente
+
+    # Estilo del gráfico
+    ax.set_title("Uso de la RAM", color='black')
+    ax.set_xlabel("Tiempo", color='black')
+    ax.set_ylabel("Uso (%)", color='black')
+    ax.tick_params(axis='x', colors='black')
+    ax.tick_params(axis='y', colors='black')
+    ax.set_ylim(0, 100)
+    ax.grid(True, color='black', linestyle='--', alpha=0.7)
+
+    # Mostrar el nombre y los datos encima del gráfico
+    nombre = "RAM"
+    ax.text(
+        0.5, 1.1,  # Posición (x, y) relativa al gráfico
+        f"{nombre}\nUso: {uso_actual}%",  # Texto a mostrar
+        transform=ax.transAxes,  # Usar coordenadas relativas
+        fontsize=10, color='none', ha='center', va='bottom'  # Estilo del texto
     )
-    for text in texts:
-        text.set_color('white')
-    for autotext in autotexts:
-        autotext.set_color('white')
-    ax.set_title("Espacio en Disco (Dona)", fontsize=9, color='white')  # Tamaño de la fuente ajustado y color blanco
 
-    # Eliminar el fondo blanco
-    fig.patch.set_alpha(0.0)
-    ax.patch.set_alpha(0.0)
+def crear_grafico_disco(datos, ax):
+    """
+    Actualiza un gráfico de dispersión del uso del disco.
+    """
+    global historial_disco
 
-    return fig
+    if "Uso de Disco (%)" not in datos:
+        raise ValueError("La clave 'Uso de Disco (%)' no está presente en los datos.")
 
-def crear_grafico_gpu(info):
-    labels = ["Memoria Usada (GB)", "Memoria Libre (GB)"]
-    values = [info["Memoria Usada (GB)"], info["Memoria Total (GB)"] - info["Memoria Usada (GB)"]]
-    angles = np.linspace(0, 2.5 * np.pi, len(labels), endpoint=False).tolist()
-    angles += angles[:1]
-    values += values[:1]
+    uso_actual = datos["Uso de Disco (%)"]
+    historial_disco.append(uso_actual)
+    if len(historial_disco) > 20:
+        historial_disco.pop(0)
 
-    fig, ax = plt.subplots(figsize=(3, 1.8), subplot_kw=dict(polar=True))  # Tamaño de la figura
-    ax.fill(angles, values, color='blue', alpha=0.25)
-    ax.plot(angles, values, color='blue', linewidth=2)
-    ax.set_yticklabels([])
-    ax.set_xticks(angles[:-1])
-    ax.set_xticklabels(labels, fontsize=7, color='white')  # Tamaño de la fuente ajustado y color blanco
-    ax.set_title("Uso de GPU", fontsize=9, color='white')  # Tamaño de la fuente ajustado y color blanco
+    ax.clear()
+    x = np.arange(len(historial_disco))
+    y = historial_disco
+    ax.scatter(x, y, color='orange', edgecolor='black', s=50)
 
-    # Eliminar el fondo blanco
-    fig.patch.set_alpha(0.0)
-    ax.patch.set_alpha(0.0)
+    # Configurar el fondo transparente
+    ax.set_facecolor('none')  # Fondo del eje transparente
+    ax.figure.patch.set_alpha(0)  # Fondo de la figura transparente
 
-    return fig
+    # Estilo del gráfico
+    ax.set_title("Uso del Disco", color='black')
+    ax.set_xlabel("Tiempo", color='black')
+    ax.set_ylabel("Uso (%)", color='black')
+    ax.tick_params(axis='x', colors='black')
+    ax.tick_params(axis='y', colors='black')
+    ax.set_ylim(0, 100)
+    ax.grid(True, color='black', linestyle='--', alpha=0.7)
 
+    # Mostrar el nombre y los datos encima del gráfico
+    nombre = "Disco"
+    ax.text(
+        0.5, 1.1,  # Posición (x, y) relativa al gráfico
+        f"{nombre}\nUso: {uso_actual}%",  # Texto a mostrar
+        transform=ax.transAxes,  # Usar coordenadas relativas
+        fontsize=10, color='none', ha='center', va='bottom'  # Estilo del texto
+    )
+
+ 
