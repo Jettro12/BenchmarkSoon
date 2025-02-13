@@ -6,8 +6,8 @@ import pandas as pd
 import tkinter as tk
 import requests
 import tkinter.ttk as ttk
-from tkinter.messagebox import showerror, showinfo
-from tkinter import BOTH, X, Y, END, VERTICAL, RIGHT, LEFT, BOTTOM
+from tkinter.messagebox import showerror
+from tkinter import BOTH, RIGHT, LEFT
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import markdown
 from tkhtmlview import HTMLLabel
@@ -24,8 +24,6 @@ from configuraciones import (
     ESTILO_BOTON_PRIMARIO,
     ESTILO_BOTON_SECUNDARIO,
     ESTILO_LABEL_TITULO,
-    #ESTILO_TEXTO_CONSEJO,
-    #ESTILO_LABEL_CATEGORIA,
     ESTILO_LABEL_PROMPTPERSONAL,
     ESTILO_LABEL_TEXTO1,
     crear_frame_redondeado
@@ -176,7 +174,7 @@ class MiAplicacion:
             compound=tk.LEFT,
         )
 
-        boton_analizar.place(relx=0.5, rely=0.8, anchor="center")
+        boton_analizar.place(relx=0.5, rely=0.87, anchor="center")
         self._crear_botones_navegacion()
 
     def verificar_conexion_internet(self):
@@ -218,8 +216,6 @@ class MiAplicacion:
         if hasattr(self, "ax_disco"):
             crear_grafico_disco(self.info_disco, self.ax_disco)
             self.canvas_disco.draw()
-
-         
 
             # Actualizar las etiquetas con las especificaciones
         self.label_cpu.config(
@@ -265,9 +261,9 @@ class MiAplicacion:
         }
 
         # Posicionar los frames
-        self.frames_categorias["Uso del CPU (%)"].place(x=152, y=15)
-        self.frames_categorias["RAM"].place(x=850, y=125)
-        self.frames_categorias["Disco"].place(x=186, y=400)
+        self.frames_categorias["Uso del CPU (%)"].place(x=1099, y=245)
+        self.frames_categorias["RAM"].place(x=205, y=15)
+        self.frames_categorias["Disco"].place(x=205, y=400)
         
         # Inicializar gráficos
         self.fig_cpu, self.ax_cpu = plt.subplots(figsize=(3, 2))
@@ -287,7 +283,7 @@ class MiAplicacion:
         self.label_cpu = tb.Label(
             self.frames_categorias["Uso del CPU (%)"],
             text="",  # Texto inicial vacío
-            font=("Helvetica", 12, "bold"),
+            font=("Helvetica", 11, "bold"),
             foreground="black",  # Texto negro
             background="",  # Fondo transparente
         )
@@ -296,7 +292,7 @@ class MiAplicacion:
         self.label_ram = tb.Label(
             self.frames_categorias["RAM"],
             text="",  # Texto inicial vacío
-            font=("Helvetica", 12, "bold"),
+            font=("Helvetica", 11, "bold"),
             foreground="black",  # Texto negro
             background="",  # Fondo transparente
         )
@@ -305,7 +301,7 @@ class MiAplicacion:
         self.label_disco = tb.Label(
             self.frames_categorias["Disco"],
             text="",  # Texto inicial vacío
-            font=("Helvetica", 12, "bold"),
+            font=("Helvetica", 11, "bold"),
             foreground="black",  # Texto negro
             background="",  # Fondo transparente
         )
@@ -325,7 +321,7 @@ class MiAplicacion:
         self.label_ram = tb.Label(
         self.frames_categorias["RAM"],
         text="",
-        font=("Helvetica", 12, "bold"),
+        font=("Helvetica", 11, "bold"),
         foreground="black",
         )
         self.label_ram.pack(pady=10)
@@ -343,7 +339,7 @@ class MiAplicacion:
         self.label_disco = tb.Label(
         self.frames_categorias["Disco"],
         text="",
-        font=("Helvetica", 12, "bold"),
+        font=("Helvetica", 11, "bold"),
         foreground="black",
         )
         self.label_disco.pack(pady=10)

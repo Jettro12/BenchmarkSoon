@@ -1,19 +1,14 @@
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import datetime
 import pandas as pd
 import matplotlib.pyplot as plt
-import tkinter as tk
-import numpy as np
-from statsmodels.tsa.arima.model import ARIMA
-
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
-from funciones import (
-    obtener_info_procesador,
-    obtener_info_ram,
-    obtener_info_disco,
+#from funciones import (
+    #obtener_info_procesador,
+    #obtener_info_ram,
+    #obtener_info_disco,
     
-)
+#)
 
 def crear_base_de_datos():
     conn = sqlite3.connect('rendimiento.db')

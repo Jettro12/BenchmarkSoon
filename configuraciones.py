@@ -60,13 +60,6 @@ ESTILO_TEXTO_CONSEJO = {
     "wraplength": 600,  # Ancho máximo antes de saltar de línea
 }
 
-# Estilo para los labels de categorías (Procesador, RAM, Disco)
-ESTILO_LABEL_CATEGORIA = {
-    "font": ("Arial", 14, "bold"),  # Fuente en negrita
-    "foreground": "#2E86C1",  # Color del texto (azul)
-    #"background": "#FFFACD",  # Color de fondo
-}
-
 ESTILO_LABEL_PROMPTPERSONAL = {
     "font": ("Helvetica", 18, "bold"),  # Fuente grande y en negrita
     "foreground": "#2E86C1",  # Color del texto (azul)
@@ -77,11 +70,6 @@ ESTILO_LABEL_TEXTO1 = {
     "foreground": "#2E86C1",
     "wraplength": 290,
     #"background": "#FFFACD",  # Color de fondo
-}
-
-ESTILO_FRAMES = {
-        "relief": "solid",  # Borde sólido para el frame
-        "borderwidth": 2,  # Grosor del borde
 }
 
 def crear_frame_redondeado(parent, x, y, width, height, radius=80, **kwargs):
